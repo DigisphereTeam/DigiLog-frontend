@@ -26,11 +26,7 @@ export const AuthProvider = ({ children }) => {
     setUserState(null);
   };
 
-  const role =
-    user?.role ||
-    user?.user_type ||
-    localStorage.getItem("userRole") ||
-    null;
+  const role = user?.role || user?.user_type || localStorage.getItem("userRole") || null;
 
   const isAdmin = role?.toLowerCase() === "admin";
   const isEmployee = role?.toLowerCase() === "employee";

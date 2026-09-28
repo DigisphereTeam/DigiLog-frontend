@@ -23,14 +23,11 @@ function useDebounce(value, delay = 500) {
 }
 
 export default function AttendanceHistory({ departments: propDepartments = [] }) {
-  // 1. Destructure values directly from AuthContext
   const { user, isAdmin, isEmployee } = useAuth();
 
-  // Retrieve employee ID using common backend keys
   const currentEmployeeId =
     user?.employee_id || user?.emp_id || user?.id || user?.employeeId;
 
-  // 2. Separate UI state for input forms from query parameters
   const [filterValues, setFilterValues] = useState({
     search: "",
     dept: "",
@@ -42,10 +39,8 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // 3. Debounce search input
   const debouncedSearch = useDebounce(filterValues.search, 500);
 
-  // 4. Construct query filters (passes empId only for non-admin/employee view)
   const queryFilters = useMemo(
     () => ({
       ...filterValues,
@@ -79,11 +74,9 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
     setCurrentPage(1);
   }, []);
 
-  // 5. Configurable Table Toolbar (Hides Employee Search & Department filter for Employees)
   const filterConfig = useMemo(() => {
     const filters = [];
 
-    // Only Admins get employee search and department selection
     if (isAdmin) {
       filters.push(
         {
@@ -97,10 +90,13 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
           placeholder: isLoadingDepts
             ? "Loading departments..."
             : "All Departments",
-          options: departmentsList.map((d) => ({
-            label: d.name || d.department_name,
-            value: d.id || d.department_id || d.name || d.department_name,
-          })),
+          options: departmentsList.map((d) => {
+            const deptName = d.name || d.department_name;
+            return {
+              label: deptName,
+              value: deptName,
+            };
+          }),
         }
       );
     }
@@ -137,7 +133,6 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
     return historyList.slice(start, start + pageSize);
   }, [historyList, currentPage, pageSize]);
 
-  // 6. Dynamic Columns (Hides Employee Name and Department columns when viewing own records)
   const columns = useMemo(() => {
     const cols = [{ key: "date", header: "DATE" }];
 

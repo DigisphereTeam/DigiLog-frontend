@@ -5,28 +5,6 @@
   box-sizing: border-box;
 }
 
-/* Header layout: Title on left, Button on right */
-.shift-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.shift-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.shift-subtitle {
-  margin: 4px 0 0 0;
-  font-size: 14px;
-  color: #64748b;
-}
 
 /* Data Table Card Wrapper */
 .shift-table-card {

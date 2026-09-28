@@ -1,8 +1,9 @@
 import { NavLink } from "react-router-dom";
-import { FiBarChart2, FiCalendar, FiDollarSign, FiGrid, FiLayers, FiRepeat, FiUsers, FiX } from "react-icons/fi";
+import { FiBarChart2, FiCalendar, FiGrid, FiLayers, FiRepeat, FiUsers, FiX } from "react-icons/fi";
 import { FaCalendarTimes, FaClipboardCheck, FaFingerprint } from "react-icons/fa";
 import { useAuth } from "../features/auth/context/AuthContext";
 import logo from "../assets/logo-digi.png";
+import { FaIndianRupeeSign } from "react-icons/fa6";
 
 const navigation = [
   {
@@ -56,7 +57,7 @@ const navigation = [
   {
     label: "Expenditure",
     path: "/expenditure",
-    icon: FiDollarSign,
+    icon: FaIndianRupeeSign,
     allowedRoles: ["admin"],
   },
   {

@@ -170,12 +170,12 @@ const Shifts = () => {
   }, [isAdmin]);
 
   return (
-    <div className="shift-management-container">
+    <div className="employee-management">
 
-      <div className="shift-header">
+      <div className="department-content-header">
         <div>
-          <h1 className="shift-title">Shift Management</h1>
-          <p className="shift-subtitle">Manage schedule shift timings</p>
+          <h1 >Shift Management</h1>
+          <p >Manage schedule shift timings</p>
         </div>
 
         {isAdmin && (
@@ -184,6 +184,7 @@ const Shifts = () => {
           </Button>
         )}
       </div>
+      
 
       <div className="shift-table-card">
         <DataTable
