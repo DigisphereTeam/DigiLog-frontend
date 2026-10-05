@@ -46,20 +46,24 @@ const INITIAL_FORM_STATE = {
 
 const formatDateRange = (fromDate, toDate) => {
   if (!fromDate || !toDate) return "N/A";
+
   const start = new Date(fromDate).toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
   });
+
   const end = new Date(toDate).toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
     year: "numeric",
   });
+
   return `${start} – ${end}`;
 };
 
 const formatAppliedOn = (dateStr) => {
   if (!dateStr) return "N/A";
+
   return new Date(dateStr).toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
@@ -80,14 +84,16 @@ const getBadgeVariant = (status) => {
   }
 };
 
-const EmployeeLeaves = ({ currentEmployeeId }) => {
+const EmployeeLeaves = ({ currentEmployeeId, isHRView = false }) => {
   const { user } = useAuth();
 
-  // Extract employee ID dynamically from auth context if not passed via props
+  // If currentEmployeeId is passed, use that employee.
+  // Otherwise, use the currently logged-in employee.
   const activeEmployeeId =
     currentEmployeeId || user?.employee_id || user?.id || user?.employeeId;
 
   const { data: apiResponse, isLoading } = useEmployeeLeaves(activeEmployeeId);
+
   const applyLeaveMutation = useApplyLeave();
 
   const rawLeaves = apiResponse?.leaves || [];
@@ -105,6 +111,7 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
     status: "",
     financialYear: currentFY,
   });
+
   const [page, setPage] = useState(1);
 
   const handleFilterChange = (name, value) => {
@@ -119,6 +126,7 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
       status: "",
       financialYear: currentFY,
     });
+
     setPage(1);
   };
 
@@ -135,10 +143,12 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
+
     if (name === "reason" && value.length > 300) return;
 
     setFormData((prev) => {
       const nextForm = { ...prev, [name]: value };
+
       if (
         name === "startDate" &&
         prev.endDate &&
@@ -146,6 +156,7 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
       ) {
         nextForm.endDate = value;
       }
+
       return nextForm;
     });
   };
@@ -155,11 +166,13 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
 
     const start = new Date(formData.startDate);
     const end = new Date(formData.endDate);
+
     const diffTime = end.getTime() - start.getTime();
 
     if (diffTime < 0) return 0;
 
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
     return formData.dayType === "half" ? diffDays * 0.5 : diffDays;
   };
 
@@ -187,10 +200,14 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
   // --- Filtering & Pagination ---
   const leavesInSelectedFY = useMemo(() => {
     const range = getFinancialYearRange(filterValues.financialYear);
+
     if (!range) return rawLeaves;
 
     return rawLeaves.filter((leave) => {
-      const leaveStartDate = leave.from_date ? leave.from_date.split("T")[0] : "";
+      const leaveStartDate = leave.from_date
+        ? leave.from_date.split("T")[0]
+        : "";
+
       return leaveStartDate >= range.start && leaveStartDate <= range.end;
     });
   }, [rawLeaves, filterValues.financialYear]);
@@ -224,6 +241,7 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
 
   const paginatedLeaves = useMemo(() => {
     const startIndex = (page - 1) * PAGE_SIZE;
+
     return filteredLeaves.slice(startIndex, startIndex + PAGE_SIZE);
   }, [filteredLeaves, page]);
 
@@ -239,6 +257,7 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
             <div className="leave-icon-badge">
               <FiCalendar />
             </div>
+
             <div>
               <div className="leave-title">{row.leave_type}</div>
             </div>
@@ -266,7 +285,9 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
       {
         key: "description",
         header: "REASON / NOTES",
-        render: (row) => <span className="text-muted">{row.description || "N/A"}</span>,
+        render: (row) => (
+          <span className="text-muted">{row.description || "N/A"}</span>
+        ),
       },
       {
         key: "created_at",
@@ -285,7 +306,7 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
         ),
       },
     ],
-    []
+    [],
   );
 
   const filterConfig = useMemo(
@@ -300,9 +321,18 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
         name: "leaveType",
         placeholder: "All Leave Types",
         options: [
-          { label: "Sick Leave", value: "Sick Leave" },
-          { label: "Casual Leave", value: "Casual Leave" },
-          { label: "Optional Holidays", value: "Optional Holidays" },
+          {
+            label: "Sick Leave",
+            value: "Sick Leave",
+          },
+          {
+            label: "Casual Leave",
+            value: "Casual Leave",
+          },
+          {
+            label: "Optional Holidays",
+            value: "Optional Holidays",
+          },
         ],
       },
       {
@@ -310,9 +340,18 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
         name: "status",
         placeholder: "All Status",
         options: [
-          { label: "Pending", value: "Pending" },
-          { label: "Approved", value: "Approved" },
-          { label: "Rejected", value: "Rejected" },
+          {
+            label: "Pending",
+            value: "Pending",
+          },
+          {
+            label: "Approved",
+            value: "Approved",
+          },
+          {
+            label: "Rejected",
+            value: "Rejected",
+          },
         ],
       },
       {
@@ -322,21 +361,23 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
         options: financialYearOptions,
       },
     ],
-    [financialYearOptions]
+    [financialYearOptions],
   );
 
   return (
     <div className="department-management">
-      <div className="department-content-header">
-        <div>
-          <h1>My Leaves</h1>
-          <p>Track your leave history and submit new leave requests.</p>
-        </div>
+      {!isHRView && (
+        <div className="department-content-header">
+          <div>
+            <h1>My Leaves</h1>
+            <p>Track your leave history and submit new leave requests.</p>
+          </div>
 
-        <Button icon={FiPlus} onClick={handleOpenAdd}>
-          Apply Leave
-        </Button>
-      </div>
+          <Button icon={FiPlus} onClick={handleOpenAdd}>
+            Apply Leave
+          </Button>
+        </div>
+      )}
 
       <div className="leaves-stats-grid">
         <StatCard
@@ -344,16 +385,19 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
           value={dashboardStats.total_leaves ?? 0}
           icon={FiCalendar}
         />
+
         <StatCard
           title="AVAILABLE LEAVES"
           value={dashboardStats.available_leaves ?? 0}
           icon={FiClock}
         />
+
         <StatCard
           title="PENDING REQUESTS"
           value={dashboardStats.pending_requests ?? 0}
           icon={FiCheckCircle}
         />
+
         <StatCard
           title="CONSUMED LEAVES"
           value={dashboardStats.consumed_leaves ?? 0}
@@ -370,7 +414,9 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
         />
 
         {isLoading ? (
-          <div className="text-center py-5 text-muted">Loading my leaves...</div>
+          <div className="text-center py-5 text-muted">
+            {isHRView ? "Loading employee leaves..." : "Loading my leaves..."}
+          </div>
         ) : (
           <>
             <DataTable
@@ -391,167 +437,175 @@ const EmployeeLeaves = ({ currentEmployeeId }) => {
         )}
       </div>
 
-      {/* --- Apply Leave CommonModal --- */}
-      <CommonModal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        title="Apply for Leave"
-        subtitle="Submit a new leave request for approval"
-      >
-        <form onSubmit={handleFormSubmit}>
-          <div className="d-flex flex-column gap-3">
-            {/* Leave Type */}
-            <div>
-              <label className="form-label fw-semibold small text-secondary mb-1">
-                Leave Type <span className="text-danger">*</span>
-              </label>
-
-              <select
-                className="form-select shadow-none"
-                name="leaveType"
-                value={formData.leaveType}
-                onChange={handleFormChange}
-                required
-              >
-                {LEAVE_TYPES.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Dates */}
-            <div className="row g-3">
-              <div className="col-12 col-sm-6">
+      {/* Apply Leave Modal - Employee only */}
+      {!isHRView && (
+        <CommonModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          title="Apply for Leave"
+          subtitle="Submit a new leave request for approval"
+        >
+          <form onSubmit={handleFormSubmit}>
+            <div className="d-flex flex-column gap-3">
+              {/* Leave Type */}
+              <div>
                 <label className="form-label fw-semibold small text-secondary mb-1">
-                  Start Date <span className="text-danger">*</span>
+                  Leave Type <span className="text-danger">*</span>
                 </label>
 
-                <div className="position-relative">
-                  <FiCalendar className="date-icon" />
-                  <input
-                    type="date"
-                    className="form-control ps-5 shadow-none"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleFormChange}
-                    required
-                  />
-                </div>
+                <select
+                  className="form-select shadow-none"
+                  name="leaveType"
+                  value={formData.leaveType}
+                  onChange={handleFormChange}
+                  required
+                >
+                  {LEAVE_TYPES.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="col-12 col-sm-6">
-                <label className="form-label fw-semibold small text-secondary mb-1">
-                  End Date <span className="text-danger">*</span>
-                </label>
-
-                <div className="position-relative">
-                  <FiCalendar className="date-icon" />
-                  <input
-                    type="date"
-                    className="form-control ps-5 shadow-none"
-                    min={formData.startDate}
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleFormChange}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Day Type */}
-            <div className="bg-light border rounded p-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div className="d-flex gap-3">
-                <div className="form-check mb-0">
-                  <input
-                    className="form-check-input shadow-none"
-                    type="radio"
-                    name="dayType"
-                    id="fullDay"
-                    value="full"
-                    checked={formData.dayType === "full"}
-                    onChange={handleFormChange}
-                  />
-                  <label
-                    className="form-check-label small fw-medium text-secondary"
-                    htmlFor="fullDay"
-                  >
-                    Full Day
+              {/* Dates */}
+              <div className="row g-3">
+                <div className="col-12 col-sm-6">
+                  <label className="form-label fw-semibold small text-secondary mb-1">
+                    Start Date <span className="text-danger">*</span>
                   </label>
+
+                  <div className="position-relative">
+                    <FiCalendar className="date-icon" />
+
+                    <input
+                      type="date"
+                      className="form-control ps-5 shadow-none"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleFormChange}
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div className="form-check mb-0">
-                  <input
-                    className="form-check-input shadow-none"
-                    type="radio"
-                    name="dayType"
-                    id="halfDay"
-                    value="half"
-                    checked={formData.dayType === "half"}
-                    onChange={handleFormChange}
-                  />
-                  <label
-                    className="form-check-label small fw-medium text-secondary"
-                    htmlFor="halfDay"
-                  >
-                    Half Day
+                <div className="col-12 col-sm-6">
+                  <label className="form-label fw-semibold small text-secondary mb-1">
+                    End Date <span className="text-danger">*</span>
                   </label>
+
+                  <div className="position-relative">
+                    <FiCalendar className="date-icon" />
+
+                    <input
+                      type="date"
+                      className="form-control ps-5 shadow-none"
+                      min={formData.startDate}
+                      name="endDate"
+                      value={formData.endDate}
+                      onChange={handleFormChange}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
-              <span className="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">
-                Total: {totalDays}{" "}
-                {totalDays === 1 ? "Working Day" : "Working Days"}
-              </span>
-            </div>
+              {/* Day Type */}
+              <div className="bg-light border rounded p-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div className="d-flex gap-3">
+                  <div className="form-check mb-0">
+                    <input
+                      className="form-check-input shadow-none"
+                      type="radio"
+                      name="dayType"
+                      id="fullDay"
+                      value="full"
+                      checked={formData.dayType === "full"}
+                      onChange={handleFormChange}
+                    />
 
-            {/* Reason */}
-            <div>
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <label className="form-label fw-semibold small text-secondary mb-0">
-                  Reason for Leave <span className="text-danger">*</span>
-                </label>
+                    <label
+                      className="form-check-label small fw-medium text-secondary"
+                      htmlFor="fullDay"
+                    >
+                      Full Day
+                    </label>
+                  </div>
 
-                <span className="text-muted fs-xs">
-                  {formData.reason.length} / 300
+                  <div className="form-check mb-0">
+                    <input
+                      className="form-check-input shadow-none"
+                      type="radio"
+                      name="dayType"
+                      id="halfDay"
+                      value="half"
+                      checked={formData.dayType === "half"}
+                      onChange={handleFormChange}
+                    />
+
+                    <label
+                      className="form-check-label small fw-medium text-secondary"
+                      htmlFor="halfDay"
+                    >
+                      Half Day
+                    </label>
+                  </div>
+                </div>
+
+                <span className="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">
+                  Total: {totalDays}{" "}
+                  {totalDays === 1 ? "Working Day" : "Working Days"}
                 </span>
               </div>
 
-              <textarea
-                className="form-control shadow-none"
-                rows={3}
-                name="reason"
-                placeholder="Enter details regarding your leave request..."
-                value={formData.reason}
-                onChange={handleFormChange}
-                required
-              />
+              {/* Reason */}
+              <div>
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <label className="form-label fw-semibold small text-secondary mb-0">
+                    Reason for Leave <span className="text-danger">*</span>
+                  </label>
+
+                  <span className="text-muted fs-xs">
+                    {formData.reason.length} / 300
+                  </span>
+                </div>
+
+                <textarea
+                  className="form-control shadow-none"
+                  rows={3}
+                  name="reason"
+                  placeholder="Enter details regarding your leave request..."
+                  value={formData.reason}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="pt-3 d-flex justify-content-end gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleModalClose}
-              disabled={applyLeaveMutation.isPending}
-            >
-              Cancel
-            </Button>
+            <div className="pt-3 d-flex justify-content-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleModalClose}
+                disabled={applyLeaveMutation.isPending}
+              >
+                Cancel
+              </Button>
 
-            <Button
-              type="submit"
-              variant="primary"
-              icon={FiCheck}
-              disabled={applyLeaveMutation.isPending}
-            >
-              {applyLeaveMutation.isPending ? "Submitting..." : "Submit Request"}
-            </Button>
-          </div>
-        </form>
-      </CommonModal>
+              <Button
+                type="submit"
+                variant="primary"
+                icon={FiCheck}
+                disabled={applyLeaveMutation.isPending}
+              >
+                {applyLeaveMutation.isPending
+                  ? "Submitting..."
+                  : "Submit Request"}
+              </Button>
+            </div>
+          </form>
+        </CommonModal>
+      )}
     </div>
   );
 };

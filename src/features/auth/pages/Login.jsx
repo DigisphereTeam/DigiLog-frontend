@@ -199,14 +199,14 @@ export default function Login() {
                     Sign in with your admin credentials to continue.
                   </p>
 
-                  {error && (
+                  {/* {error && (
                     <div
                       className="alert alert-danger py-2 px-3 mb-3"
                       role="alert"
                     >
                       {error}
                     </div>
-                  )}
+                  )} */}
 
                   <form onSubmit={handleAdminSubmit} noValidate>
                     <label className="form-label" htmlFor="adminEmail">
@@ -284,15 +284,6 @@ export default function Login() {
                   <p className="sub">
                     Enter your registered work email to sign in.
                   </p>
-
-                  {employeeError && (
-                    <div
-                      className="alert alert-danger py-2 px-3 mb-3"
-                      role="alert"
-                    >
-                      {employeeError}
-                    </div>
-                  )}
 
                   <form onSubmit={handleEmployeeSubmit} noValidate>
                     <label className="form-label" htmlFor="employeeEmail">

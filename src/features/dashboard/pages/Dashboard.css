@@ -4,33 +4,33 @@
   gap: 20px;
   padding: 12px;
 }
- 
+
 .page-sub {
   font-size: 13px;
   color: #6b7a99;
   margin-top: -12px;
 }
- 
-/* GRIDS */
+
+/* 1. STATS GRID */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
- 
-.charts-grid {
+
+/* 2. FULL WIDTH CHART ROW */
+.full-width-chart-row {
+  width: 100%;
+}
+
+/* 3. BOTTOM ROW: PUNCH ACTIVITY (LEFT) & DONUT CHART (RIGHT) */
+.bottom-activity-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  grid-template-columns: 1.3fr 1fr;
   gap: 16px;
   align-items: start;
 }
- 
-.panels-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 16px;
-}
- 
+
 /* CARDS */
 .card-box {
   background: #ffffff;
@@ -39,44 +39,44 @@
   padding: 20px;
   height: fit-content;
 }
- 
+
 .card-heading {
   font-size: 15px;
   font-weight: 700;
   color: #0a2647;
   margin: 0;
 }
- 
+
 .card-subtext {
   font-size: 12px;
   color: #6b7a99;
   margin-top: 4px;
-  margin-bottom: 16px; /* Spacing added above charts */
+  margin-bottom: 16px;
 }
- 
-/* CHARTS FIXES */
+
+/* CHARTS */
 .chart-wrapper {
   position: relative;
-  height: 325px;
+  height: 320px;
   width: 100%;
 }
- 
+
 .doughnut-wrapper {
   position: relative;
-  height: 180px;
+  height: 200px;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
 }
- 
+
 .dept-legend {
   margin-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
- 
+
 .legend-item {
   display: flex;
   justify-content: space-between;
@@ -84,7 +84,7 @@
   font-size: 12.5px;
   color: #6b7a99;
 }
- 
+
 .dot {
   width: 8px;
   height: 8px;
@@ -92,7 +92,7 @@
   display: inline-block;
   margin-right: 8px;
 }
- 
+
 /* PANELS & PUNCH FEED */
 .panel-header {
   display: flex;
@@ -100,7 +100,7 @@
   align-items: center;
   margin-bottom: 12px;
 }
- 
+
 .live-badge {
   background: #e6f9fc;
   color: #0096c7;
@@ -112,9 +112,13 @@
   align-items: center;
   gap: 4px;
 }
- 
-.punch-item,
-.dept-item {
+
+.punch-feed {
+  display: flex;
+  flex-direction: column;
+}
+
+.punch-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -122,53 +126,61 @@
   border-bottom: 1px solid #f0f3f8;
   gap: 12px;
 }
- 
-.punch-item:last-child,
-.dept-item:last-child {
+
+.punch-item:last-child {
   border-bottom: none;
 }
- 
-/* ALIGNMENT FIX FOR AVATAR & NAME */
+
 .punch-info {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
- 
+
 .punch-info strong {
   font-size: 13.5px;
   font-weight: 600;
   color: #0a2647;
   line-height: 1.2;
 }
- 
-.punch-info p,
-.dept-item p {
+
+.punch-info p {
   font-size: 11.5px;
   color: #6b7a99;
   margin: 2px 0 0 0;
   line-height: 1.2;
 }
- 
-.badge-late {
-  background: #fff4e5;
-  color: #f79009;
+
+/* BASE BADGE STYLE */
+.punch-status-badge {
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 11px;
   font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
 }
- 
-.dept-chip {
-  background: #e6f9fc;
-  color: #0096c7;
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 700;
+
+/* ON TIME (Green) */
+.badge-on-time,
+.badge-present {
+  background: #ecfdf5;
+  color: #10b981;
 }
- 
+
+/* LATE (Orange) */
+.badge-late {
+  background: #fff4e5;
+  color: #f79009;
+}
+
+/* ABSENT / EARLY OUT (Red / Neutral) */
+.badge-absent {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
 /* STAT CARD ICON STYLING */
 .stat-icon-wrapper {
   width: 40px;
@@ -181,106 +193,92 @@
   color: #0096c7;
   font-size: 18px;
 }
- 
-/* RESPONSIVE DASHBOARD */
- 
+
+/* RESPONSIVE BREAKPOINTS */
+
 /* Tablet */
 @media (max-width: 991.98px) {
   .dashboard-view {
     padding: 12px;
     gap: 16px;
   }
- 
-  /* 2 stat cards per row */
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 14px;
   }
- 
-  /* Stack charts */
-  .charts-grid {
-    grid-template-columns:1fr;
-    gap: 12px;
-  }
- 
-  /* Stack bottom panels */
-  .panels-grid {
+
+  .bottom-activity-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
- 
+
   .chart-wrapper {
-    height: 300px;
+    height: 280px;
   }
- 
+
   .doughnut-wrapper {
     height: 220px;
   }
 }
- 
+
 /* Mobile */
 @media (max-width: 575.98px) {
   .dashboard-view {
     padding: 8px;
     gap: 12px;
   }
- 
-  /* 1 stat card per row */
+
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 12px;
   }
- 
-  .charts-grid,
-  .panels-grid {
+
+  .bottom-activity-grid {
     grid-template-columns: 1fr;
     gap: 12px;
   }
- 
+
   .card-box {
     padding: 16px;
     border-radius: 12px;
   }
- 
+
   .card-heading {
     font-size: 14px;
   }
- 
+
   .card-subtext {
     font-size: 11.5px;
   }
- 
+
   .chart-wrapper {
-    height: 260px;
+    height: 240px;
   }
- 
+
   .doughnut-wrapper {
-    height: 200px;
+    height: 180px;
   }
- 
+
   .panel-header {
     align-items: flex-start;
     gap: 10px;
   }
- 
+
   .live-badge {
     font-size: 10px;
     padding: 4px 8px;
   }
- 
-  .punch-item,
-  .dept-item {
+
+  .punch-item {
     gap: 8px;
   }
- 
+
   .punch-info strong {
     font-size: 12.5px;
   }
- 
-  .punch-info p,
-  .dept-item p {
+
+  .punch-info p {
     font-size: 10.5px;
   }
 }
- 
- 

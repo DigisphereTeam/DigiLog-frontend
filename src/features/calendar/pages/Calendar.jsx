@@ -39,14 +39,17 @@ const getCurrentTimeString = () => {
 const Calendar = () => {
   const { isAdmin } = useAuth(); // Auth context integration
 
-  const [viewedDate, setViewedDate] = useState(new Date(2026, 8, 1));
+  const [viewedDate, setViewedDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  
   const { data: fetchedEvents = [], isLoading } = useEvents();
 
   // React Query Mutations
   const { mutate: addEvent, isPending: isAdding } = useAddEvent();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
 
-  // Group fetched events by date key
   const eventsByDate = useMemo(() => {
     return fetchedEvents.reduce((acc, event) => {
       if (!event.date) return acc;
@@ -58,15 +61,12 @@ const Calendar = () => {
     }, {});
   }, [fetchedEvents]);
 
-  // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [selectedCell, setSelectedCell] = useState(null);
 
-  // Confirm Delete State
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Form State
   const [newEvent, setNewEvent] = useState({
     title: "",
     type: "Event",
@@ -89,7 +89,6 @@ const Calendar = () => {
 
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
 
-  // --- Modal Handlers ---
   const handleOpenAddModal = () => {
     const today = new Date();
     setSelectedCell({
@@ -154,7 +153,6 @@ const Calendar = () => {
     });
   };
 
-  // --- Confirm Delete Handlers ---
   const handleOpenDeleteDialog = (evt) => {
     setDeleteTarget(evt);
   };
@@ -199,7 +197,6 @@ const Calendar = () => {
         ))}
       </div>
 
-      {/* Calendar Card */}
       <div className="calendar-card">
         <div className="calendar-nav">
           <button

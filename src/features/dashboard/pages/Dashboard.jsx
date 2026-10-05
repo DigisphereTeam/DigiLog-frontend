@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
- 
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,10 +9,10 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
- 
+
 import { Bar, Doughnut } from "react-chartjs-2";
 import toast from "react-hot-toast";
- 
+
 import {
   FaUsers,
   FaUserCheck,
@@ -20,15 +20,15 @@ import {
   FaUserClock,
   FaFingerprint,
 } from "react-icons/fa";
- 
+
 import { useDashboard } from "../api/dashboardApi";
- 
+
 import StatCard from "../../../components/StatCard/StatCard";
 import Avatar from "../../../components/Avatar/Avatar";
- 
-import "./Dashboard.css";
 import LoadingSpinner from "../../../components/LoadingSpinner/LoadingSpinner";
- 
+
+import "./Dashboard.css";
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -37,10 +37,9 @@ ChartJS.register(
   Tooltip,
   Legend,
 );
- 
-// 4th Fix: Exact icon mapping matching image_8c05be
+
 const statIcons = [FaUsers, FaUserCheck, FaUserTimes, FaUserClock];
- 
+
 const departmentColors = [
   "#0F3460",
   "#00B4D8",
@@ -48,10 +47,10 @@ const departmentColors = [
   "#F79009",
   "#F04438",
 ];
- 
+
 const Dashboard = () => {
   const { data: response, isLoading, isError, error } = useDashboard();
- 
+
   useEffect(() => {
     if (isError) {
       toast.error(
@@ -59,22 +58,21 @@ const Dashboard = () => {
       );
     }
   }, [isError, error]);
- 
+
   const dashboardData = response?.data;
- 
+
   const summary = dashboardData?.summary || {};
   const weeklyTrend = dashboardData?.weeklyTrend || [];
   const departmentStrength = dashboardData?.departmentStrength || [];
   const punchActivity = dashboardData?.punchActivity || [];
-  const departmentsOverview = dashboardData?.departmentsOverview || [];
- 
+
   const statsData = [
     { title: "Total Employees", value: summary.totalEmployees || 0 },
     { title: "Present Today", value: summary.presentToday || 0 },
     { title: "Absent Today", value: summary.absentToday || 0 },
     { title: "Late Arrivals", value: summary.lateArrivals || 0 },
   ];
- 
+
   const weeklyChartData = useMemo(
     () => ({
       labels: weeklyTrend.map((item) => item.day),
@@ -98,7 +96,7 @@ const Dashboard = () => {
     }),
     [weeklyTrend],
   );
- 
+
   const departmentChartData = useMemo(
     () => ({
       labels: departmentStrength.map((item) => item.department),
@@ -112,26 +110,26 @@ const Dashboard = () => {
     }),
     [departmentStrength],
   );
- 
+
   if (isLoading) {
-    return (
-      <LoadingSpinner message="Loading Dashboard data" fullPage/>
-    );
+    return <LoadingSpinner message="Loading Dashboard data" fullPage />;
   }
- if (isError) {
+
+  if (isError) {
     return (
       <div className="employee-management">
         <div className="error-card">Failed to fetch data</div>
       </div>
     );
   }
+
   return (
     <div className="dashboard-view">
-      {/* STATS ROW */}
+      {/* 1. STATS ROW */}
       <div className="stats-grid">
         {statsData.map((item, idx) => {
           const IconComponent = statIcons[idx % statIcons.length];
- 
+
           return (
             <StatCard
               key={idx}
@@ -146,9 +144,9 @@ const Dashboard = () => {
           );
         })}
       </div>
- 
-      {/* CHARTS ROW */}
-      <div className="charts-grid">
+
+      {/* 2. FULL WIDTH WEEKLY TREND CHART */}
+      <div className="full-width-chart-row">
         <div className="card-box">
           <h3 className="card-heading">Weekly Attendance Trend</h3>
           <p className="card-subtext">
@@ -169,43 +167,11 @@ const Dashboard = () => {
             />
           </div>
         </div>
- 
-        <div className="card-box">
-          <h3 className="card-heading">Department-wise Strength</h3>
-          <p className="card-subtext">Employee distribution</p>
- 
-          {/* 3rd Fix: Wrapper centered flex layout */}
-          <div className="doughnut-wrapper">
-            <Doughnut
-              data={departmentChartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: "70%",
-                plugins: { legend: { display: false } },
-              }}
-            />
-          </div>
- 
-          <div className="dept-legend">
-            {departmentStrength.map((item, idx) => (
-              <div className="legend-item" key={item.department}>
-                <span>
-                  <span
-                    className="dot"
-                    style={{ backgroundColor: departmentColors[idx] }}
-                  ></span>
-                  {item.department}
-                </span>
-                <strong>{item.count}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
- 
-      {/* BOTTOM PANELS ROW */}
-      <div className="panels-grid">
+
+      {/* 3. BOTTOM ROW: TODAY'S PUNCH ACTIVITY & DEPARTMENT-WISE STRENGTH */}
+      <div className="bottom-activity-grid">
+        {/* TODAY'S PUNCH ACTIVITY */}
         <div className="card-box">
           <div className="panel-header">
             <h3 className="card-heading">Today's Punch Activity</h3>
@@ -217,51 +183,65 @@ const Dashboard = () => {
             {punchActivity.length > 0 ? (
               punchActivity.map((item, idx) => (
                 <div key={`${item.employeeId}-${idx}`} className="punch-item">
-                  {/* 1st Fix: Avatar alongside aligned info wrapper */}
                   <Avatar name={item.employeeName} size="small" />
- 
+
                   <div className="punch-info">
                     <strong>{item.employeeName}</strong>
                     <p>
                       {item.department} • {item.punchInTime}
                     </p>
                   </div>
- 
-                  <span className="badge-late">{item.status}</span>
+
+                  <span
+                    className={`punch-status-badge badge-${item.status.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    {item.status}
+                  </span>
                 </div>
               ))
             ) : (
-              <p className="card-subtext ">No punch activity available.</p>
+              <p className="card-subtext">No punch activity available.</p>
             )}
           </div>
         </div>
- 
+
         <div className="card-box">
-          <h3 className="card-heading">Departments Overview</h3>
-          <p className="card-subtext">Quick snapshot</p>
-          <div className="dept-list">
-            {departmentsOverview.length > 0 ? (
-              departmentsOverview.map((dept) => (
-                <div key={dept.departmentId} className="dept-item">
-                  <div>
-                    <strong>{dept.departmentName}</strong>
-                    {/* <p>Head: {dept.head}</p> */}
- 
-                    <p> Employee count: {dept.employeeCount} </p>
-                  </div>
-                  <span className="dept-chip">{dept.employeeCount}</span>
-                </div>
-              ))
-            ) : (
-              <p>No departments available.</p>
-            )}
+          <h3 className="card-heading">Department-wise Strength</h3>
+          <p className="card-subtext">Employee distribution</p>
+
+          <div className="doughnut-wrapper">
+            <Doughnut
+              data={departmentChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "70%",
+                plugins: { legend: { display: false } },
+              }}
+            />
+          </div>
+
+          <div className="dept-legend">
+            {departmentStrength.map((item, idx) => (
+              <div className="legend-item" key={item.department}>
+                <span>
+                  <span
+                    className="dot"
+                    style={{
+                      backgroundColor:
+                        departmentColors[idx % departmentColors.length],
+                    }}
+                  ></span>
+                  {item.department}
+                </span>
+                <strong>{item.count}</strong>
+              </div>
+            ))}
           </div>
         </div>
       </div>
     </div>
   );
 };
- 
+
 export default Dashboard;
- 
- 
