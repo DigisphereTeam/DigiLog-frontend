@@ -1,0 +1,85 @@
+.salary-employee-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.salary-employee-name {
+    font-weight: 600;
+    color: #17324d;
+}
+
+.salary-employee-code {
+    font-size: 12px;
+    color: #6b829d;
+}
+
+.salary-lop-value {
+    color: #94a7bd;
+}
+
+.salary-lop-value--danger {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.salary-deduction-value {
+    color: #dc2626;
+    font-weight: 500;
+}
+
+.salary-deduction-value--zero {
+    color: #94a7bd;
+}
+
+.salary-total-value {
+    color: #17324d;
+    font-weight: 700;
+}
+
+.salary-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.salary-status-dot {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.salary-status-badge--paid {
+    color: #1670d2;
+    background: #e5efff;
+}
+
+.salary-status-badge--pending {
+    color: #b66a00;
+    background: #fff0d2;
+}
+
+.salary-table-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.salary-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    padding: 4px;
+    color: #55708d;
+    cursor: pointer;
+    font-size: 17px;
+}
+
+.salary-action-button:hover {
+    color: #0879d1;
+}

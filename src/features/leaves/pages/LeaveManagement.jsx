@@ -28,8 +28,6 @@ import EmployeeLeaves from "./EmployeeLeaves";
 
 import "./EmployeeLeaves.css";
 
-const PAGE_SIZE = 10;
-
 const formatDateRange = (fromDate, toDate) => {
   if (!fromDate || !toDate) return "N/A";
 
@@ -82,6 +80,7 @@ const LeaveManagement = () => {
     financialYear: currentFY,
   });
 
+  const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
 
   const handleFilterChange = (name, value) => {
@@ -195,9 +194,6 @@ const LeaveManagement = () => {
     filterValues.status,
   ]);
 
-  // ---------------------------------------
-  // Pagination
-  // ---------------------------------------
   const paginatedLeaves = useMemo(() => {
     const startIndex = (page - 1) * PAGE_SIZE;
 
@@ -206,9 +202,6 @@ const LeaveManagement = () => {
 
   const totalPages = Math.max(1, Math.ceil(filteredLeaves.length / PAGE_SIZE));
 
-  // ---------------------------------------
-  // Table Columns
-  // ---------------------------------------
   const columns = useMemo(
     () => [
       {
@@ -286,7 +279,6 @@ const LeaveManagement = () => {
                 alignItems: "center",
               }}
             >
-              {/* View Employee Leaves */}
               <button
                 type="button"
                 className="action-view-btn"
@@ -301,7 +293,6 @@ const LeaveManagement = () => {
                 <FiEye />
               </button>
 
-              {/* Approve */}
               <button
                 type="button"
                 className="action-view-btn"
@@ -318,7 +309,6 @@ const LeaveManagement = () => {
                 <FiCheck />
               </button>
 
-              {/* Reject */}
               <button
                 type="button"
                 className="action-view-btn"
@@ -342,9 +332,6 @@ const LeaveManagement = () => {
     [updateLeaveStatusMutation.isPending],
   );
 
-  // ---------------------------------------
-  // Toolbar Filters
-  // ---------------------------------------
   const filterConfig = useMemo(
     () => [
       {
@@ -407,13 +394,10 @@ const LeaveManagement = () => {
     [financialYearOptions],
   );
 
-  // ---------------------------------------
-  // Employee Leave Details View
-  // ---------------------------------------
   if (selectedEmployeeId) {
     return (
-      <div className="employee-details-container p-4 bg-light min-vh-100">
-        <div className="department-employees-header mb-4">
+      <div className="employee-details-container p-2 bg-light min-vh-100">
+        <div className="department-employees-header mb-0">
           <h1>{selectedEmployeeName}'s Leaves</h1>
 
           <button
@@ -434,9 +418,6 @@ const LeaveManagement = () => {
     );
   }
 
-  // ---------------------------------------
-  // Main HR Leave Management
-  // ---------------------------------------
   return (
     <div className="department-management">
       <div className="department-content-header">
@@ -473,7 +454,7 @@ const LeaveManagement = () => {
         />
       </div>
 
-      <div className="leaves-table-card">
+      <div className="employee-content-card">
         <TableToolbar
           filters={filterConfig}
           values={filterValues}
@@ -481,28 +462,16 @@ const LeaveManagement = () => {
           onClear={handleClearFilters}
         />
 
-        {isLoading ? (
-          <div className="text-center py-5 text-muted">
-            Loading leave requests...
-          </div>
-        ) : (
-          <>
-            <DataTable
-              columns={columns}
-              data={paginatedLeaves}
-              rowKey="leave_id"
-            />
+        <DataTable columns={columns} data={paginatedLeaves} rowKey="leave_id" />
 
-            <TablePagination
-              page={page}
-              totalPages={totalPages}
-              totalRecords={filteredLeaves.length}
-              pageSize={PAGE_SIZE}
-              onPrevious={() => setPage((p) => Math.max(p - 1, 1))}
-              onNext={() => setPage((p) => Math.min(p + 1, totalPages))}
-            />
-          </>
-        )}
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalRecords={filteredLeaves.length}
+          pageSize={PAGE_SIZE}
+          onPrevious={() => setPage((p) => Math.max(p - 1, 1))}
+          onNext={() => setPage((p) => Math.min(p + 1, totalPages))}
+        />
       </div>
     </div>
   );

@@ -125,6 +125,12 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-view">
+      <div className="department-content-header mb-2">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Welcome back 👋! Here is your daily employee attendance summary.</p>
+        </div>
+      </div>
       {/* 1. STATS ROW */}
       <div className="stats-grid">
         {statsData.map((item, idx) => {

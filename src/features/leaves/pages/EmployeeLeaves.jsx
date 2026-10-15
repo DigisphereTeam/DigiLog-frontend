@@ -389,13 +389,13 @@ const EmployeeLeaves = ({ currentEmployeeId, isHRView = false }) => {
         <StatCard
           title="AVAILABLE LEAVES"
           value={dashboardStats.available_leaves ?? 0}
-          icon={FiClock}
+          icon={FiCheckCircle}
         />
 
         <StatCard
           title="PENDING REQUESTS"
           value={dashboardStats.pending_requests ?? 0}
-          icon={FiCheckCircle}
+          icon={FiClock}
         />
 
         <StatCard
@@ -405,36 +405,23 @@ const EmployeeLeaves = ({ currentEmployeeId, isHRView = false }) => {
         />
       </div>
 
-      <div className="leaves-table-card">
+      <div className="employee-content-card">
         <TableToolbar
           filters={filterConfig}
           values={filterValues}
           onChange={handleFilterChange}
           onClear={handleClearFilters}
         />
+        <DataTable columns={columns} data={paginatedLeaves} rowKey="leave_id" />
 
-        {isLoading ? (
-          <div className="text-center py-5 text-muted">
-            {isHRView ? "Loading employee leaves..." : "Loading my leaves..."}
-          </div>
-        ) : (
-          <>
-            <DataTable
-              columns={columns}
-              data={paginatedLeaves}
-              rowKey="leave_id"
-            />
-
-            <TablePagination
-              page={page}
-              totalPages={totalPages}
-              totalRecords={filteredLeaves.length}
-              pageSize={PAGE_SIZE}
-              onPrevious={() => setPage((p) => Math.max(p - 1, 1))}
-              onNext={() => setPage((p) => Math.min(p + 1, totalPages))}
-            />
-          </>
-        )}
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalRecords={filteredLeaves.length}
+          pageSize={PAGE_SIZE}
+          onPrevious={() => setPage((p) => Math.max(p - 1, 1))}
+          onNext={() => setPage((p) => Math.min(p + 1, totalPages))}
+        />
       </div>
 
       {/* Apply Leave Modal - Employee only */}

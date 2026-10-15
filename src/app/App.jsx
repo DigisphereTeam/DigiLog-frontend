@@ -18,6 +18,8 @@ import Shifts from "../features/shifts/pages/Shifts";
 
 // Guards
 import { ProtectedRoute, RoleGuard, RootRedirect } from "./ProtectedRoute";
+import EmployeeSalary from "../features/salary/pages/EmployeeSalary";
+import SalaryManagement from "../features/salary/pages/SalaryManagement";
 
 const App = () => {
   return (
@@ -41,6 +43,7 @@ const App = () => {
           {/* EMPLOYEE ONLY MODULES     */}       
           <Route element={<RoleGuard allowedRoles={["employee"]} />}>
             <Route path="/leaves" element={<EmployeeLeaves />} />
+            <Route path="/employee-salary" element={<EmployeeSalary />} />
           </Route>
 
           {/* ADMIN ONLY MODULES                                          */}
@@ -52,6 +55,7 @@ const App = () => {
             <Route path="/departments/:departmentId/employees" element={<DepartmentEmployees />} />
             <Route path="/biometrics" element={<BiometricEnrollment />} />
             <Route path="/leave-management" element={<LeaveManagement />} />
+            <Route path="/salary-management" element={<SalaryManagement />} />
             <Route path="/expenditure" element={<Expenditure />} />
             <Route path="/reports" element={<Reports />} />
           </Route>

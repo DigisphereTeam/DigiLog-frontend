@@ -261,8 +261,7 @@ const Expenditure = () => {
           Add Expenditure
         </Button>
       </div>
-
-      {/* Filter and Toolbar */}
+      <div className="employee-content-card">
       <TableToolbar
         filters={[
           {
@@ -285,7 +284,6 @@ const Expenditure = () => {
         onClear={handleClearFilters}
       />
 
-      {/* Expenditure Table */}
       <DataTable
         columns={columns}
         data={paginatedExpenditures}
@@ -294,7 +292,6 @@ const Expenditure = () => {
         emptyMessage="No expenditures found."
       />
 
-      {/* Pagination */}
       {filteredExpenditures.length > 0 && (
         <TablePagination
           page={safeCurrentPage}
@@ -307,6 +304,7 @@ const Expenditure = () => {
           }
         />
       )}
+      </div>
 
       {/* Add / Edit Expenditure Modal */}
       <CommonModal

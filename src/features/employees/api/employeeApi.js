@@ -21,10 +21,7 @@ export const createEmployee = async (payload) => {
 };
 
 export const updateEmployee = async ({ id, payload }) => {
-  const { data } = await axiosInstance.put(
-    EMPLOYEE_ENDPOINTS.UPDATE(id),
-    payload,
-  );
+  const { data } = await axiosInstance.put(EMPLOYEE_ENDPOINTS.UPDATE(id),payload);
   return data;
 };
 
@@ -131,13 +128,10 @@ export const useEmployeeAttendance = (employeeId) => {
     queryFn: () => getEmployeeAttendance(employeeId),
     enabled: Boolean(employeeId),
     select: (response) => {
-      const summary = response?.summary || {
-        present: 0,
-        late: 0,
-        absent: 0,
-        total_marked_days: 0,
-      };
-      const rawList = response?.data || [];
+      const resData = response?.data || response; 
+      const emp = resData?.employee || {};
+      const summary = resData?.summary || { present: 0, late: 0, absent: 0, total_marked_days: 0 };
+      const rawList = resData?.attendance || [];
 
       const attendanceList = rawList.map((item, index) => ({
         id: index + 1,
@@ -149,8 +143,21 @@ export const useEmployeeAttendance = (employeeId) => {
       }));
 
       return {
-        employeeName: response?.employee_name || "",
-        employeeId: response?.employee_id || "",
+        employee: {
+          id: emp.employee_id,
+          name: emp.employee_name || "N/A",
+          empCode: emp.emp_code || "N/A",
+          designation: emp.designation || "N/A",
+          departmentName: emp.department_name || "Unassigned",
+          phone: emp.mobile_number || "N/A",
+          email: emp.email || "N/A",
+          status: emp.status || "Active",
+          joiningDate: formatToUTCDate(emp.joining_date) || "-",
+          fingerprintRegistered: emp.fingerprint_status === "Registered",
+          salary: emp.salary || {},
+          bankDetails: emp.bank_details || {},
+          dob: emp.date_of_birth || "-",
+        },
         summary,
         attendanceList,
       };

@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { loginAdmin, loginEmployee } from "../api/authApi";
 import { useAuth } from "../context/AuthContext"; // Import useAuth
-import logo from "../../../assets/digiLog-logo.png";
+// import logo from "../../../assets/digiLog-logo.png";
+import logo from "../../../assets/logo-digi.png";
 
 import "./Login.css";
 

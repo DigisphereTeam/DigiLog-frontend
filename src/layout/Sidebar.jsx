@@ -1,9 +1,9 @@
 import { NavLink } from "react-router-dom";
 import { FiBarChart2, FiCalendar, FiGrid, FiLayers, FiRepeat, FiUsers, FiX } from "react-icons/fi";
-import { FaCalendarTimes, FaClipboardCheck, FaFingerprint } from "react-icons/fa";
+import { FaCalendarTimes, FaClipboardCheck, FaFingerprint,  } from "react-icons/fa";
+import { FaIndianRupeeSign, FaMoneyBillTransfer } from "react-icons/fa6";
 import { useAuth } from "../features/auth/context/AuthContext";
 import logo from "../assets/logo-digi.png";
-import { FaIndianRupeeSign } from "react-icons/fa6";
 
 const navigation = [
   {
@@ -19,7 +19,7 @@ const navigation = [
     allowedRoles: ["admin"],
   },
   {
-    label: "Department Management",
+    label: "Departments",
     path: "/departments",
     icon: FiLayers,
     allowedRoles: ["admin"],
@@ -49,6 +49,18 @@ const navigation = [
     allowedRoles: ["employee"],
   },
   {
+    label: "Salary Management",
+    path: "/salary-management",
+    icon: FaIndianRupeeSign,
+    allowedRoles: ["admin"],
+  },
+  {
+    label: "My Salary",
+    path: "/employee-salary",
+    icon: FaIndianRupeeSign,
+    allowedRoles: ["employee"],
+  },
+  {
     label: "Shift Management",
     path: "/shifts",
     icon: FiRepeat,
@@ -57,7 +69,7 @@ const navigation = [
   {
     label: "Expenditure",
     path: "/expenditure",
-    icon: FaIndianRupeeSign,
+    icon: FaMoneyBillTransfer,
     allowedRoles: ["admin"],
   },
   {

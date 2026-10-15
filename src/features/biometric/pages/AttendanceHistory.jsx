@@ -22,7 +22,9 @@ function useDebounce(value, delay = 500) {
   return debouncedValue;
 }
 
-export default function AttendanceHistory({ departments: propDepartments = [] }) {
+export default function AttendanceHistory({
+  departments: propDepartments = [],
+}) {
   const { user, isAdmin, isEmployee } = useAuth();
 
   const currentEmployeeId =
@@ -47,7 +49,7 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
       search: debouncedSearch,
       empId: isEmployee ? currentEmployeeId : undefined,
     }),
-    [filterValues, debouncedSearch, isEmployee, currentEmployeeId]
+    [filterValues, debouncedSearch, isEmployee, currentEmployeeId],
   );
 
   const { data: historyList = [], isLoading: isLoadingHistory } =
@@ -97,7 +99,7 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
               value: deptName,
             };
           }),
-        }
+        },
       );
     }
 
@@ -119,7 +121,7 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
       {
         name: "endDate",
         type: "date",
-      }
+      },
     );
 
     return filters;
@@ -154,7 +156,7 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
           key: "dept",
           header: "DEPARTMENT",
           render: (row) => <Badge variant="info">{row.dept}</Badge>,
-        }
+        },
       );
     }
 
@@ -184,7 +186,7 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
 
           return <Badge variant={variant}>{row.status}</Badge>;
         },
-      }
+      },
     );
 
     return cols;
@@ -194,9 +196,7 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
     <div className="attendance-history-card">
       <div className="department-content-header">
         <div>
-          <h1>
-            {isAdmin ? "Attendance History" : "My Attendance History"}
-          </h1>
+          <h1>{isAdmin ? "Attendance History" : "My Attendance History"}</h1>
           <p>
             {isAdmin
               ? "Employee-wise and department-wise attendance records"
@@ -204,40 +204,32 @@ export default function AttendanceHistory({ departments: propDepartments = [] })
           </p>
         </div>
       </div>
+      <div className="employee-content-card">
+        <TableToolbar
+          filters={filterConfig}
+          values={filterValues}
+          onChange={handleFilterChange}
+          onClear={handleClearFilters}
+        />
 
-      <TableToolbar
-        filters={filterConfig}
-        values={filterValues}
-        onChange={handleFilterChange}
-        onClear={handleClearFilters}
-      />
+        <DataTable
+          columns={columns}
+          data={paginatedData}
+          rowKey="id"
+          emptyMessage="No attendance records found matching your query."
+        />
 
-      {isLoadingHistory ? (
-        <div className="text-center py-5 text-muted">
-          <div className="spinner-border text-primary me-2" role="status" />
-          Loading attendance history...
-        </div>
-      ) : (
-        <>
-          <DataTable
-            columns={columns}
-            data={paginatedData}
-            rowKey="id"
-            emptyMessage="No attendance records found matching your query."
+        {totalRecords > 0 && (
+          <TablePagination
+            page={currentPage}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            pageSize={pageSize}
+            onPrevious={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
           />
-
-          {totalRecords > 0 && (
-            <TablePagination
-              page={currentPage}
-              totalPages={totalPages}
-              totalRecords={totalRecords}
-              pageSize={pageSize}
-              onPrevious={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-            />
-          )}
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 }

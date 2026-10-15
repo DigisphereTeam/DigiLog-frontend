@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { FiEdit2, FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
-import { useNavigate } from "react-router-dom"; // Fixed: Removed unused 'data' import
+import { useNavigate } from "react-router-dom";
 import {
   FaUsers,
   FaUserCheck,
@@ -15,12 +15,13 @@ import StatCard from "../../../components/StatCard/StatCard";
 import TablePagination from "../../../components/TablePagination/TablePagination";
 import TableToolbar from "../../../components/TableToolbar/TableToolbar";
 
-import EmployeeModal from "./EmployeeModal";
+import EmployeeModal from "../components/EmployeeModal";
 import {
   useCreateEmployee,
   useUpdateEmployee,
   useDeleteEmployee,
   useEmployees,
+  getEmployeeAttendance,
 } from "../api/employeeApi";
 import { useDepartments } from "../../departments/api/departmentApi";
 
@@ -33,6 +34,7 @@ import Button from "../../../components/Button/Button";
 
 const PAGE_SIZE = 10;
 
+// Updated initial form state to include all personal, salary, and bank fields
 const INITIAL_FORM_STATE = {
   employeeId: "",
   empCode: "",
@@ -41,7 +43,21 @@ const INITIAL_FORM_STATE = {
   department: "",
   designation: "",
   phone: "",
+  dob: "",
+  joiningDate: "",
   status: "Active",
+  basicSalary: "",
+  hra: "",
+  travelAllowance: "",
+  otherAllowances: "",
+  pfDeduction: "",
+  professionalTax: "",
+  otherDeductions: "",
+  accountHolderName: "",
+  bankName: "",
+  accountNumber: "",
+  ifscCode: "",
+  branchName: "",
 };
 
 const INITIAL_FILTERS = {
@@ -61,18 +77,18 @@ const EmployeeManagement = () => {
   } = useEmployees();
   const { employees = [], counts = {} } = data;
   const { data: departments = [] } = useDepartments();
-
+  
   const createEmployeeMutation = useCreateEmployee();
   const updateEmployeeMutation = useUpdateEmployee();
   const deleteEmployeeMutation = useDeleteEmployee();
 
-  const [selectedEmployeeForDelete, setSelectedEmployeeForDelete] =
-    useState(null);
+  const [selectedEmployeeForDelete, setSelectedEmployeeForDelete] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [employeeForm, setEmployeeForm] = useState(INITIAL_FORM_STATE);
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [page, setPage] = useState(1);
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
 
   const departmentOptions = useMemo(() => {
     return (departments || []).map((dept) => ({
@@ -135,21 +151,54 @@ const EmployeeManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleOpenEditEmployee = useCallback((employee) => {
+  const handleOpenEditEmployee = useCallback(async (employee) => {
     setEditingEmployee(employee);
+    setIsFetchingDetails(true);
+    
+    try {
+      // Fetch full employee details (salary, bank info, etc.) on demand
+      const response = await getEmployeeAttendance(employee.id);
+      const resData = response?.data || response || {};
+      const fullEmp = resData?.employee || {};
+      const salary = fullEmp.salary || {};
+      const bankDetails = fullEmp.bank_details || {};
 
-    setEmployeeForm({
-      employeeId: String(employee.employeeId || ""),
-      empCode: String(employee.empCode || ""),
-      name: String(employee.name || ""),
-      email: String(employee.email || ""),
-      department: String(employee.departmentId || ""),
-      designation: String(employee.designation || ""),
-      phone: String(employee.phone || ""),
-      status: String(employee.status || ""),
-    });
-
-    setIsModalOpen(true);
+      setEmployeeForm({
+        employeeId: String(employee.id || ""),
+        empCode: String(fullEmp.emp_code || employee.empCode || ""),
+        name: String(fullEmp.employee_name || employee.name || ""),
+        email: String(fullEmp.email || employee.email || ""),
+        department: String(fullEmp.department_id || employee.departmentId || ""),
+        designation: String(fullEmp.designation || employee.designation || ""),
+        phone: String(fullEmp.mobile_number || employee.phone || ""),
+        dob: fullEmp.date_of_birth || "",
+        joiningDate: fullEmp.joining_date || "",
+        status: String(fullEmp.status || employee.status || "Active"),
+        
+        // Salary fields
+        basicSalary: salary.basic_salary ?? "",
+        hra: salary.hra ?? "",
+        travelAllowance: salary.travel_allowance ?? "",
+        otherAllowances: salary.other_allowances ?? "",
+        pfDeduction: salary.pf_deduction ?? "",
+        professionalTax: salary.professional_tax ?? "",
+        otherDeductions: salary.total_deductions ?? salary.other_deductions ?? "",
+        effectiveDate: salary.effective_date || fullEmp.joining_date || "",
+        
+        // Bank fields
+        accountHolderName: bankDetails.account_holder_name || fullEmp.employee_name || "",
+        bankName: bankDetails.bank_name || "",
+        accountNumber: bankDetails.account_number || "",
+        ifscCode: bankDetails.ifsc_code || "",
+        branchName: bankDetails.branch_name || "",
+      });
+    } catch (err) {
+      toast.error("Failed to load full employee details for editing.");
+      console.error(err);
+    } finally {
+      setIsFetchingDetails(false);
+      setIsModalOpen(true);
+    }
   }, []);
 
   const handleCloseEmployeeModal = () => {
@@ -159,24 +208,40 @@ const EmployeeManagement = () => {
   };
 
   const handleSaveEmployee = (formData) => {
-    const result = employeeSchema.safeParse(formData);
-
-    if (!result.success) {
-      const firstError = result.error.issues[0];
-
-      toast.error(firstError.message);
-
-      return;
+    // Optional: Zod Schema validation check if used
+    if (employeeSchema) {
+      const result = employeeSchema.safeParse(formData);
+      if (!result.success) {
+        const firstError = result.error.issues[0];
+        toast.error(firstError.message);
+        return;
+      }
     }
 
+    // Transform form fields into the exact JSON API payload needed by backend
     const payload = {
       employee_name: formData.name,
+      date_of_birth: formData.dob,
       department_id: Number(formData.department),
       designation: formData.designation,
       mobile_number: formData.phone,
-      status: formData.status,
+      status: formData.status || "Active",
       email: formData.email,
       emp_code: formData.empCode,
+      joining_date: formData.joiningDate,
+      basic_salary: Number(formData.basicSalary || 0),
+      hra: Number(formData.hra || 0),
+      travel_allowance: Number(formData.travelAllowance || 0),
+      other_allowances: Number(formData.otherAllowances || 0),
+      pf_deduction: Number(formData.pfDeduction || 0),
+      professional_tax: Number(formData.professionalTax || 0),
+      other_deductions: Number(formData.otherDeductions || 0),
+      effective_date: formData.effectiveDate || formData.joiningDate,
+      account_holder_name: formData.accountHolderName,
+      bank_name: formData.bankName,
+      account_number: formData.accountNumber,
+      ifsc_code: formData.ifscCode,
+      branch_name: formData.branchName,
     };
 
     if (editingEmployee) {
@@ -266,10 +331,6 @@ const EmployeeManagement = () => {
           </div>
         ),
       },
-      // {
-      //   key: "employeeId",
-      //   header: "Emp ID",
-      // },
       {
         key: "empCode",
         header: "Emp Code",
@@ -292,6 +353,15 @@ const EmployeeManagement = () => {
       {
         key: "phone",
         header: "Phone",
+      },
+      {
+        key: "joining_date",
+        header: "Joining Date",
+        render: (employee) => 
+          employee.joiningDate || 
+          employee.joining_date || 
+          employee?.raw?.joining_date || 
+          "-",
       },
       {
         key: "status",

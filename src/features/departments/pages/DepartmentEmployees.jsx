@@ -155,7 +155,7 @@ const DepartmentEmployees = () => {
         />
       </div>
 
-      <div className="department-employee-table-section">
+      <div className="employee-content-card">
         <DataTable columns={columns} data={paginatedEmployees} />
 
         <TablePagination

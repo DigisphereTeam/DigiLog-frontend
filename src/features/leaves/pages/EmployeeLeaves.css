@@ -1,6 +1,4 @@
-/* ==========================================================================
-   Stats Grid
-   ========================================================================== */
+
 .leaves-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -18,17 +16,6 @@
   .leaves-stats-grid {
     grid-template-columns: 1fr;
   }
-}
-
-/* ==========================================================================
-   Table Card & Cell Styling
-   ========================================================================== */
-.leaves-table-card {
-  background-color: #ffffff;
-  border: 1px solid #e5eaf0;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .leave-type-cell {
@@ -92,9 +79,7 @@
   color: #0f172a;
 }
 
-/* ==========================================================================
-   Embedded Leave Modal & Form Helper Styling
-   ========================================================================== */
+/* Leave modal  */
 .custom-modal-backdrop {
   background-color: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(2px);

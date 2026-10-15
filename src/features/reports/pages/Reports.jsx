@@ -227,9 +227,7 @@ export default function Reports() {
       </div>
 
       {isFetching && (
-        <div className="reports-loading-indicator">
-          Loading...
-        </div>
+        <LoadingSpinner message="Loading Reports..." fullPage/>
       )}
 
       <div className="metrics-grid">

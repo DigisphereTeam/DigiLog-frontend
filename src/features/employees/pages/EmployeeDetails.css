@@ -1,0 +1,22 @@
+.employee-details-container {
+  font-family: inherit;
+}
+
+.employee-tabs .nav-link {
+  color: #6c757d;
+  font-size: 0.95rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.employee-tabs .nav-link.active {
+  color: #212529 !important;
+  border-bottom: 3px solid #0464A4 !important;
+}
+
+.employee-tabs .nav-link:hover {
+  color: #212529;
+}
+
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.04) !important;
+}

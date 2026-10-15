@@ -16,7 +16,7 @@ const getCurrentYYYYMM = () => {
 };
  
 const getYearsList = () => {
-  const startYear = 1900;
+  const startYear = 2000;
   const endYear = 2100;
  
   return Array.from(
