@@ -1,0 +1,279 @@
+/* Container & Layout Wrapper */
+.payslip-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f3f4f6;
+  padding: 20px;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #111827;
+}
+
+.payslip-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 850px;
+  padding: 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+/* Header Section */
+.payslip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.payslip-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+}
+
+.payslip-month {
+  font-weight: 400;
+  color: #374151;
+}
+
+.payslip-address-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  color: #1f2937;
+}
+
+.payslip-address {
+  font-size: 12px;
+  color: #4b5563;
+  margin: 2px 0;
+  line-height: 1.4;
+}
+
+.payslip-brand-box {
+  text-align: right;
+}
+
+.brand-logo {
+  font-size: 28px;
+  font-weight: 700;
+  color: #00a8cc; /* matching the cyan tone in image */
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.brand-tagline {
+  font-size: 7.5px;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.8px;
+  margin-top: 4px;
+}
+
+/* Section Headings & Lines */
+.section-block {
+  margin-bottom: 24px;
+}
+
+.section-heading {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #000000;
+  margin: 0 0 10px 0;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid #111827;
+}
+
+/* Employee Details Grid */
+.info-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  row-gap: 12px;
+  column-gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.info-value {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Salary Stats Grid */
+.salary-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Earnings & Deductions Split Layout */
+.earnings-deductions-container {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+  margin-top: 10px;
+}
+
+.ledger-column {
+  flex: 1;
+  padding: 0 10px;
+}
+
+.ledger-column:first-child {
+  padding-left: 0;
+}
+
+.ledger-column:last-child {
+  padding-right: 0;
+}
+
+.ledger-divider {
+  width: 1px;
+  background-color: #d1d5db;
+  margin: 0 10px;
+}
+
+.ledger-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px 0;
+  letter-spacing: 0.3px;
+}
+
+.ledger-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.ledger-row.total-row {
+  font-weight: 700;
+  color: #111827;
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 6px;
+  margin-top: 10px;
+}
+
+/* Net Salary Highlight Box */
+.net-salary-box {
+  background-color: #dbeafe; /* Light blue panel matching screenshot */
+  padding: 14px 20px;
+  margin: 24px 0;
+  border-radius: 2px;
+}
+
+.net-salary-row {
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 6px;
+}
+
+.net-salary-row:last-child {
+  margin-bottom: 0;
+}
+
+.net-label {
+  width: 160px;
+}
+
+.net-colon {
+  margin-right: 16px;
+}
+
+.net-val {
+  flex: 1;
+}
+
+/* Footer Section */
+.payslip-footer {
+  margin-top: 30px;
+}
+
+.footer-note {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 6px 0;
+}
+
+.footer-sub {
+  font-size: 10px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Responsive Media Query for Mobile screens */
+@media (max-width: 768px) {
+  .payslip-card {
+    padding: 20px;
+  }
+  
+  .payslip-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .payslip-brand-box {
+    text-align: left;
+  }
+
+  .info-grid-3, 
+  .salary-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .earnings-deductions-container {
+    flex-direction: column;
+  }
+
+  .ledger-divider {
+    display: none;
+  }
+
+  .ledger-column {
+    padding: 0;
+    margin-bottom: 16px;
+  }
+
+  .net-label {
+    width: 130px;
+  }
+}

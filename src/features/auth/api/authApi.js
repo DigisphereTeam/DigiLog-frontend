@@ -11,6 +11,6 @@ export const loginAdmin = async (payload) => {
 };
 
 export const loginEmployee = async (payload) => {
-  const { data } = await axiosInstance.post(AUTH_ENDPOINTS.EMPLOYEE_LOGIN, payload);
+  const { data } = await axiosInstance.post(AUTH_ENDPOINTS.EMPLOYEE_LOGIN, {...payload });
   return data;
 };

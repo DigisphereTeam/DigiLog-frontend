@@ -86,16 +86,13 @@ const getBadgeVariant = (status) => {
 
 const EmployeeLeaves = ({ currentEmployeeId, isHRView = false }) => {
   const { user } = useAuth();
-
   // If currentEmployeeId is passed, use that employee.
   // Otherwise, use the currently logged-in employee.
-  const activeEmployeeId =
-    currentEmployeeId || user?.employee_id || user?.id || user?.employeeId;
+  const activeEmployeeId = currentEmployeeId || user?.employee_id || user?.id || user?.employeeId;
 
   const { data: apiResponse, isLoading } = useEmployeeLeaves(activeEmployeeId);
 
   const applyLeaveMutation = useApplyLeave();
-
   const rawLeaves = apiResponse?.leaves || [];
   const dashboardStats = apiResponse?.dashboard || {};
 
@@ -130,7 +127,6 @@ const EmployeeLeaves = ({ currentEmployeeId, isHRView = false }) => {
     setPage(1);
   };
 
-  // --- Modal Handlers ---
   const handleOpenAdd = () => {
     setFormData(INITIAL_FORM_STATE);
     setIsModalOpen(true);
@@ -197,7 +193,6 @@ const EmployeeLeaves = ({ currentEmployeeId, isHRView = false }) => {
     });
   };
 
-  // --- Filtering & Pagination ---
   const leavesInSelectedFY = useMemo(() => {
     const range = getFinancialYearRange(filterValues.financialYear);
 

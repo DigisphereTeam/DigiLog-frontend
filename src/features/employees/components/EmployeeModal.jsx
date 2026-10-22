@@ -95,6 +95,23 @@ const EmployeeModal = ({
             />
           </div>
 
+          {/* NEW FIELD: Password */}
+          <div className="emp-form-group">
+            <label htmlFor="password">
+              Password {!isEditing && <span className="required-star">*</span>}
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder={isEditing ? "Leave blank to keep unchanged" : "e.g. ••••••••"}
+              value={formData?.password || ""}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              {...(!isEditing && { required: true })}
+            />
+          </div>
+
           <div className="emp-form-group">
             <label htmlFor="department">
               Department <span className="required-star">*</span>
@@ -178,6 +195,19 @@ const EmployeeModal = ({
               onChange={handleChange}
               disabled={isSubmitting}
               required
+            />
+          </div>
+
+          {/* NEW FIELD: Relieving Date */}
+          <div className="emp-form-group">
+            <label htmlFor="relievingDate">Relieving Date</label>
+            <input
+              id="relievingDate"
+              name="relievingDate"
+              type="date"
+              value={formData?.relievingDate || ""}
+              onChange={handleChange}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -285,14 +315,28 @@ const EmployeeModal = ({
               disabled={isSubmitting}
             />
           </div>
+
           <div className="emp-form-group">
-            <label htmlFor="professionalTax">Other Deductions</label>
+            <label htmlFor="otherDeductions">Other Deductions</label>
             <input
               id="otherDeductions"
               name="otherDeductions"
               type="number"
               placeholder="e.g. 200"
               value={formData?.otherDeductions || ""}
+              onChange={handleChange}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          {/* NEW FIELD: Effective Date */}
+          <div className="emp-form-group">
+            <label htmlFor="effectiveDate">Effective Date</label>
+            <input
+              id="effectiveDate"
+              name="effectiveDate"
+              type="date"
+              value={formData?.effectiveDate || ""}
               onChange={handleChange}
               disabled={isSubmitting}
             />

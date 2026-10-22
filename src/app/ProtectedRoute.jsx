@@ -15,7 +15,7 @@ export const RoleGuard = ({ allowedRoles }) => {
   if (!userRole || !normalizedAllowedRoles.includes(userRole)) {
     // If an employee tries to access an unallowed admin page, redirect them to their home module
     if (userRole === "employee") {
-      return <Navigate to="/attendance-history" replace />;
+      return <Navigate to="/calendar" replace />;
     }
     return <Navigate to="/login" replace />;
   }
@@ -29,7 +29,7 @@ export const RootRedirect = () => {
   const userRole = role?.toLowerCase();
 
   if (userRole === "employee") {
-    return <Navigate to="/attendance-history" replace />;
+    return <Navigate to="/calendar" replace />;
   }
 
   return <Navigate to="/dashboard" replace />;

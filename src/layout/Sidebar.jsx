@@ -31,6 +31,12 @@ const navigation = [
   //   allowedRoles: ["admin"],
   // },
   {
+    label: "Calendar",
+    path: "/calendar",
+    icon: FiCalendar,
+    allowedRoles: ["admin", "employee"],
+  },
+  {
     label: "Attendance History",
     path: "/attendance-history",
     icon: FaClipboardCheck,
@@ -72,12 +78,7 @@ const navigation = [
     icon: FaMoneyBillTransfer,
     allowedRoles: ["admin"],
   },
-  {
-    label: "Calendar",
-    path: "/calendar",
-    icon: FiCalendar,
-    allowedRoles: ["admin", "employee"],
-  },
+  
   {
     label: "Reports",
     path: "/reports",

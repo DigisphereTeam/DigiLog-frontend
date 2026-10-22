@@ -1,252 +1,471 @@
-import { useState, useEffect } from "react";
-import { FiRefreshCw, FiCheck } from "react-icons/fi";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { FiCheck, FiCalendar, FiChevronDown } from "react-icons/fi";
 import CommonModal from "../../../components/CommonModal/CommonModal";
 import { formatCurrency } from "../../../utils/formatCurrency";
+import { useEmployeeList, useEmpInfo } from "../api/salaryApi";
+import toast from "react-hot-toast";
+import "./AddSalaryModal.css";
 
-const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null, employeesList = [] }) => {
-  const [month, setMonth] = useState("Oct 2026");
-  const [selectedEmpCode, setSelectedEmpCode] = useState("");
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const getYearsList = () => {
+  const startYear = 2000;
+  const endYear = 2100;
+  return Array.from(
+    { length: endYear - startYear + 1 },
+    (_, index) => startYear + index,
+  );
+};
+
+const parseMonthLabelToYYYYMM = (label) => {
+  try {
+    const [monthStr, yearStr] = label.split(" ");
+    const monthIdx = MONTHS.indexOf(monthStr);
+    if (monthIdx !== -1 && yearStr) {
+      return `${yearStr}-${String(monthIdx + 1).padStart(2, "0")}`;
+    }
+  } catch (e) {}
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const parseYYYYMMToLabel = (yyyymm) => {
+  try {
+    const [yearStr, monthStr] = yyyymm.split("-");
+    const monthIdx = parseInt(monthStr, 10) - 1;
+    if (!isNaN(monthIdx) && MONTHS[monthIdx]) {
+      return `${MONTHS[monthIdx]} ${yearStr}`;
+    }
+  } catch (e) {}
+  return "Sep 2026";
+};
+
+const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
+  const [month, setMonth] = useState("Sep 2026");
+  const [selectedEmpId, setSelectedEmpId] = useState("");
   const [noLop, setNoLop] = useState(false);
   const [approveFutureDays, setApproveFutureDays] = useState(0);
   const [otherDeductions, setOtherDeductions] = useState(0);
   const [reason, setReason] = useState("");
 
-  // Find currently selected employee object from list
-  const activeEmployee = employeesList.find(
-    (emp) => emp.employeeCode === selectedEmpCode || emp.id === selectedEmpCode
-  ) || employeeData || {};
+  // API 1: Lazy load employee list ONLY when dropdown is clicked
+  const [hasOpenedEmpDropdown, setHasOpenedEmpDropdown] = useState(false);
+  const { data: employeesList = [], isLoading: isEmpListLoading } =
+    useEmployeeList(hasOpenedEmpDropdown);
 
-  // Populate data when editing an existing record or opening modal
+  // Popover States & Refs
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+  const [isEmpDropdownOpen, setIsEmpDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const empDropdownRef = useRef(null);
+
+  const rawYYYYMM = parseMonthLabelToYYYYMM(month); // e.g., "2026-09"
+  const [yearStr, monthStr] = rawYYYYMM.split("-");
+  const currentYear = parseInt(yearStr, 10) || new Date().getFullYear();
+  const currentMonthIdx = parseInt(monthStr, 10) - 1 || 0;
+  const yearsList = getYearsList();
+
+  // API 2: Fetch specific employee details when ID or month changes
+  const { data: empInfo, isLoading: isEmpInfoLoading } = useEmpInfo(
+    selectedEmpId,
+    rawYYYYMM,
+  );
+
+  const handleCloseDropdowns = useCallback(() => {
+    setIsMonthPickerOpen(false);
+    setIsEmpDropdownOpen(false);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        empDropdownRef.current &&
+        !empDropdownRef.current.contains(event.target)
+      ) {
+        handleCloseDropdowns();
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") handleCloseDropdowns();
+    };
+
+    if (isMonthPickerOpen || isEmpDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMonthPickerOpen, isEmpDropdownOpen, handleCloseDropdowns]);
+
+  const handleSelectMonth = (monthIndex) => {
+    const formattedMonth = String(monthIndex + 1).padStart(2, "0");
+    setMonth(parseYYYYMMToLabel(`${currentYear}-${formattedMonth}`));
+    setIsMonthPickerOpen(false);
+  };
+
+  const handleSelectYear = (year) => {
+    const formattedMonth = String(currentMonthIdx + 1).padStart(2, "0");
+    setMonth(parseYYYYMMToLabel(`${year}-${formattedMonth}`));
+  };
+
+  const resetForm = () => {
+    setSelectedEmpId("");
+    setNoLop(false);
+    setApproveFutureDays(0);
+    setOtherDeductions(0);
+    setReason("");
+    setMonth("Sep 2026");
+    setHasOpenedEmpDropdown(false);
+  };
+  // Inside useEffect when editing/opening modal:
   useEffect(() => {
     if (employeeData) {
-      setSelectedEmpCode(employeeData.employeeCode || "");
-      setNoLop(employeeData.lopDays === 0 && employeeData.deductions > 0 ? false : employeeData.noLop || false);
-      setApproveFutureDays(employeeData.extra || 0);
+      // Ensure we capture employee_id correctly (fallback to id if needed)
+      setSelectedEmpId(employeeData.employee_id || employeeData.id || "");
       setOtherDeductions(employeeData.deductions || 0);
-      setReason(employeeData.reason || "");
+      if (employeeData.month) setMonth(employeeData.month);
     } else {
       resetForm();
     }
   }, [employeeData, isOpen]);
 
-  const resetForm = () => {
-    setSelectedEmpCode("");
-    setNoLop(false);
-    setApproveFutureDays(0);
-    setOtherDeductions(0);
-    setReason("");
-  };
+  // Map API 2 response fields with fallbacks
+  const monthlyCtc = empInfo?.current_ctc || 0;
+  const annualCtc = empInfo?.annual_ctc || monthlyCtc * 12;
+  const workingDays = empInfo?.working_days || 0;
+  const presentDays = empInfo?.present_days || 0;
+  const absentDays = empInfo?.absent_days || 0;
+  const leavesTaken = empInfo?.leaves_taken || 0;
+  const balanceLeft = empInfo?.available_leaves || 0;
+  const baseLopDays = empInfo?.lop_days_before_hr || 0;
 
-  // Dynamic calculations based on selected employee data
-  const monthlyCtc = activeEmployee.monthlyCTC || 0;
-  const annualCtc = monthlyCtc * 12;
-  const workingDays = activeEmployee.workingDays || 27;
-  const presentDays = activeEmployee.presentDays || 27;
-  const leavesTaken = activeEmployee.leavesTaken || 0;
-  const balanceLeft = activeEmployee.balanceLeft ?? 3;
-  
-  const perDaySalary = workingDays > 0 ? Math.round(monthlyCtc / workingDays) : 0;
-  const lopDays = noLop ? 0 : (activeEmployee.lopDays || 0);
+  const perDaySalary =
+    workingDays > 0 ? Math.round(monthlyCtc / workingDays) : 0;
+  const lopDays = noLop ? 0 : baseLopDays;
   const lopDeduction = lopDays * perDaySalary;
   const netSalary = monthlyCtc - lopDeduction - Number(otherDeductions || 0);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const targetEmpId = selectedEmpId || employeeData?.employee_id;
+
+    if (!targetEmpId) {
+      toast.error("Please select an employee");
+      return;
+    }
+
     const payload = {
-      employeeCode: activeEmployee.employeeCode,
-      employeeName: activeEmployee.employeeName,
-      month,
-      noLop,
-      approveFutureDays,
-      otherDeductions: Number(otherDeductions),
-      netSalary,
+      salary_month: `${rawYYYYMM}-01`,
+      working_days: workingDays,
+      days_present: presentDays,
+      leaves_taken: leavesTaken,
+      available_leaves: balanceLeft,
+      lop_days: lopDays,
+      gross_amount: monthlyCtc,
+      deductions: Number(otherDeductions || 0),
+      hr_reason:
+        reason ||
+        "Approved leave days are within the employee's available leave balance.",
     };
-    onSave(payload);
-    onClose();
+
+    // Simply hand the data up to the parent component
+    onSave(targetEmpId, payload);
   };
+
+  const selectedEmployeeObj = (
+    Array.isArray(employeesList) ? employeesList : []
+  ).find((e) => String(e.employee_id) === String(selectedEmpId));
 
   return (
     <CommonModal
       isOpen={isOpen}
       onClose={onClose}
-      title={employeeData ? "Edit Salary" : "Add Salary"}
+      title={employeeData ? "Edit Salary" : "Credit Salary"}
       subtitle="Pick an employee. Salary, attendance, and leave data are fetched automatically."
-      primaryLabel={employeeData ? "Save Changes" : "Save Salary"}
+      primaryLabel="Save Salary"
       primaryIcon={FiCheck}
       formId="add-salary-form"
       secondaryLabel="Cancel"
       onSecondaryClick={onClose}
       maxWidth="620px"
     >
-      <form id="add-salary-form" onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "12px" }}>
-          <div>
-            <label style={{ fontSize: "12.5px", fontWeight: "600", display: "block", marginBottom: "4px" }}>
-              Salary Month <span style={{ color: "red" }}>*</span>
+      <form
+        id="add-salary-form"
+        onSubmit={handleSubmit}
+        className="salary-modal-form"
+      >
+        <div className="salary-modal-row">
+          {/* Month Picker */}
+          <div className="salary-form-group">
+            <label className="salary-label">
+              Salary Month <span className="required-star">*</span>
             </label>
-            <select
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              style={{ width: "100%", height: "38px", borderRadius: "8px", border: "1px solid #e3e9f0", padding: "0 10px" }}
-            >
-              <option value="Oct 2026">Oct 2026</option>
-              <option value="Sep 2026">Sep 2026</option>
-            </select>
+            <div className="modal-month-wrapper" ref={dropdownRef}>
+              <button
+                type="button"
+                className={`modal-month-trigger ${isMonthPickerOpen ? "active" : ""}`}
+                onClick={() => setIsMonthPickerOpen((prev) => !prev)}
+              >
+                <span className="month-trigger-content">
+                  <FiCalendar className="modal-date-icon" />
+                  <span>{month}</span>
+                </span>
+                <FiChevronDown className="modal-select-icon" />
+              </button>
+
+              {isMonthPickerOpen && (
+                <div
+                  className="month-picker-popover"
+                  role="dialog"
+                  aria-label="Month Picker"
+                >
+                  <div className="year-display-header">{currentYear}</div>
+                  <div className="months-grid">
+                    {MONTHS.map((m, idx) => (
+                      <button
+                        key={m}
+                        type="button"
+                        className={`month-cell ${idx === currentMonthIdx ? "selected" : ""}`}
+                        onClick={() => handleSelectMonth(idx)}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="years-scroll-list">
+                    {yearsList.map((y) => (
+                      <button
+                        key={y}
+                        type="button"
+                        className={`year-row ${y === currentYear ? "active" : ""}`}
+                        onClick={() => handleSelectYear(y)}
+                      >
+                        {y}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label style={{ fontSize: "12.5px", fontWeight: "600", display: "block", marginBottom: "4px" }}>
-              Employee <span style={{ color: "red" }}>*</span>
+          {/* Employee Dropdown with Scroller (API 1 Lazy Loaded) */}
+          <div className="salary-form-group">
+            <label className="salary-label">
+              Employee <span className="required-star">*</span>
             </label>
-            <select
-              value={selectedEmpCode}
-              onChange={(e) => setSelectedEmpCode(e.target.value)}
-              disabled={Boolean(employeeData)}
-              style={{ width: "100%", height: "38px", borderRadius: "8px", border: "1px solid #e3e9f0", padding: "0 10px" }}
-            >
-              <option value="">Select Employee</option>
-              {employeesList.map((emp) => (
-                <option key={emp.id || emp.employeeCode} value={emp.employeeCode}>
-                  {emp.employeeName} ({emp.employeeCode})
-                </option>
-              ))}
-            </select>
+            <div className="modal-month-wrapper" ref={empDropdownRef}>
+              <button
+                type="button"
+                className={`modal-month-trigger ${isEmpDropdownOpen ? "active" : ""}`}
+                onClick={() => {
+                  if (!employeeData) {
+                    setHasOpenedEmpDropdown(true); // Triggers API 1 fetch on click
+                    setIsEmpDropdownOpen((prev) => !prev);
+                  }
+                }}
+                disabled={Boolean(employeeData)}
+                style={{ cursor: employeeData ? "not-allowed" : "pointer" }}
+              >
+                <span className="month-trigger-content">
+                  <span>
+                    {selectedEmployeeObj
+                      ? `${selectedEmployeeObj.employee_name} (${selectedEmployeeObj.employee_id})`
+                      : isEmpListLoading
+                        ? "Loading employees..."
+                        : "Select Employee"}
+                  </span>
+                </span>
+                <FiChevronDown className="modal-select-icon" />
+              </button>
+
+              {isEmpDropdownOpen && (
+                <div
+                  className="month-picker-popover employee-dropdown-popover"
+                  role="dialog"
+                >
+                  <div
+                    className="years-scroll-list"
+                    style={{ maxHeight: "220px", overflowY: "auto" }}
+                  >
+                    <button
+                      type="button"
+                      className={`year-row ${!selectedEmpId ? "active" : ""}`}
+                      onClick={() => {
+                        setSelectedEmpId("");
+                        setIsEmpDropdownOpen(false);
+                      }}
+                    >
+                      Select Employee
+                    </button>
+                    {(Array.isArray(employeesList) ? employeesList : []).map(
+                      (emp) => (
+                        <button
+                          key={emp.employee_id}
+                          type="button"
+                          className={`year-row ${String(emp.employee_id) === String(selectedEmpId) ? "active" : ""}`}
+                          onClick={() => {
+                            setSelectedEmpId(emp.employee_id);
+                            setIsEmpDropdownOpen(false);
+                          }}
+                        >
+                          {emp.employee_name} ({emp.employee_id})
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#0b5ca8", marginBottom: "14px" }}>
-          <span>✓ Fetched just now</span>
-          <button type="button" style={{ border: "none", background: "none", color: "#0b5ca8", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
-            <FiRefreshCw /> Refresh data
-          </button>
+        <div className="salary-fetch-status">
+          <span>
+            {isEmpInfoLoading
+              ? "Fetching attendance & salary records..."
+              : "✓ Records updated"}
+          </span>
         </div>
 
         {/* Salary Section */}
-        <div style={{ fontSize: "11px", fontWeight: "700", color: "#5b6f86", marginBottom: "6px" }}>
-          SALARY <span style={{ background: "#d9f3f7", color: "#1aa6bd", padding: "2px 6px", borderRadius: "10px", fontSize: "10px" }}>Employee module</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "14px" }}>
-          <div style={{ background: "#f8fafc", border: "1px solid #e3e9f0", borderRadius: "8px", padding: "8px 12px" }}>
-            <small style={{ color: "#5b6f86", fontSize: "11px" }}>Annual CTC</small>
-            <div style={{ fontWeight: "700", fontSize: "15px" }}>{formatCurrency(annualCtc)}</div>
+        <div className="section-title">SALARY</div>
+        <div className="grid-2-cols mb-14">
+          <div className="info-card">
+            <small className="info-card-label">Annual CTC</small>
+            <div className="info-card-value">{formatCurrency(annualCtc)}</div>
           </div>
-          <div style={{ background: "#f8fafc", border: "1px solid #e3e9f0", borderRadius: "8px", padding: "8px 12px" }}>
-            <small style={{ color: "#5b6f86", fontSize: "11px" }}>Monthly CTC</small>
-            <div style={{ fontWeight: "700", fontSize: "15px" }}>{formatCurrency(monthlyCtc)}</div>
+          <div className="info-card">
+            <small className="info-card-label">Monthly CTC</small>
+            <div className="info-card-value">{formatCurrency(monthlyCtc)}</div>
           </div>
         </div>
 
         {/* Attendance Section */}
-        <div style={{ fontSize: "11px", fontWeight: "700", color: "#5b6f86", marginBottom: "6px" }}>
-          ATTENDANCE - {month.toUpperCase()} <span style={{ background: "#d9f3f7", color: "#1aa6bd", padding: "2px 6px", borderRadius: "10px", fontSize: "10px" }}>Attendance module</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "14px" }}>
-          <div style={{ background: "#f8fafc", border: "1px solid #e3e9f0", borderRadius: "8px", padding: "8px 12px" }}>
-            <small style={{ color: "#5b6f86", fontSize: "11px" }}>Working days</small>
-            <div style={{ fontWeight: "700" }}>{workingDays}</div>
+        <div className="section-title">ATTENDANCE - {month.toUpperCase()}</div>
+        <div className="grid-3-cols mb-14">
+          <div className="info-card">
+            <small className="info-card-label">Working days</small>
+            <div className="info-card-value">{workingDays}</div>
           </div>
-          <div style={{ background: "#f8fafc", border: "1px solid #e3e9f0", borderRadius: "8px", padding: "8px 12px" }}>
-            <small style={{ color: "#5b6f86", fontSize: "11px" }}>Present days</small>
-            <div style={{ fontWeight: "700" }}>{presentDays}</div>
+          <div className="info-card">
+            <small className="info-card-label">Present days</small>
+            <div className="info-card-value">{presentDays}</div>
           </div>
-          <div style={{ background: "#f8fafc", border: "1px solid #e3e9f0", borderRadius: "8px", padding: "8px 12px" }}>
-            <small style={{ color: "#5b6f86", fontSize: "11px" }}>Absent days</small>
-            <div style={{ fontWeight: "700" }}>{workingDays - presentDays}</div>
+          <div className="info-card">
+            <small className="info-card-label">Absent days</small>
+            <div className="info-card-value">{absentDays}</div>
           </div>
         </div>
 
         {/* Leaves Section */}
-        <div style={{ fontSize: "11px", fontWeight: "700", color: "#5b6f86", marginBottom: "6px" }}>
-          LEAVES - {month.toUpperCase()} <span style={{ background: "#d9f3f7", color: "#1aa6bd", padding: "2px 6px", borderRadius: "10px", fontSize: "10px" }}>Leave module</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "14px" }}>
-          <div style={{ background: "#f8fafc", border: "1px solid #e3e9f0", borderRadius: "8px", padding: "8px 12px" }}>
-            <small style={{ color: "#5b6f86", fontSize: "11px" }}>Leaves taken</small>
-            <div style={{ fontWeight: "700" }}>{leavesTaken}</div>
+        <div className="section-title">LEAVES - {month.toUpperCase()}</div>
+        <div className="grid-3-cols mb-14">
+          <div className="info-card">
+            <small className="info-card-label">Leaves taken</small>
+            <div className="info-card-value">{leavesTaken}</div>
           </div>
-          <div style={{ background: "#f8fafc", border: "1px solid #e3e9f0", borderRadius: "8px", padding: "8px 12px" }}>
-            <small style={{ color: "#5b6f86", fontSize: "11px" }}>Paid leave available</small>
-            <div style={{ fontWeight: "700" }}>{balanceLeft}</div>
+          <div className="info-card">
+            <small className="info-card-label">Available Leaves</small>
+            <div className="info-card-value">{balanceLeft}</div>
           </div>
-          <div style={{ background: "#f8fafc", border: "1px solid #e3e9f0", borderRadius: "8px", padding: "8px 12px" }}>
-            <small style={{ color: "#5b6f86", fontSize: "11px" }}>LOP days (before HR)</small>
-            <div style={{ fontWeight: "700" }}>{activeEmployee.lopDays || 0}</div>
+          <div className="info-card">
+            <small className="info-card-label">LOP days (before HR)</small>
+            <div className="info-card-value">{baseLopDays}</div>
           </div>
         </div>
 
-        {/* HR Adjustment */}
-        <div style={{ fontSize: "11px", fontWeight: "700", color: "#5b6f86", marginBottom: "6px" }}>HR ADJUSTMENT</div>
-        <div style={{ border: "1px solid #e3e9f0", borderRadius: "8px", padding: "10px 12px", marginBottom: "12px" }}>
-          <label style={{ display: "flex", gap: "8px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>
-            <input type="checkbox" checked={noLop} onChange={(e) => setNoLop(e.target.checked)} />
+        {/* HR Adjustments */}
+        <div className="section-title">HR ADJUSTMENT</div>
+        <div className="hr-adjustment-box">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={noLop}
+              onChange={(e) => setNoLop(e.target.checked)}
+            />
             <span>
               No LOP for this month
-              <small style={{ display: "block", color: "#5b6f86", fontWeight: "400", fontSize: "11px" }}>
-                No salary is deducted for unpaid leave. The days still count against the leave balance.
+              <small className="checkbox-subtext">
+                No salary is deducted for unpaid leave.
               </small>
             </span>
           </label>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-          <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "4px" }}>Approve future leave days</label>
+        <div className="salary-modal-row">
+          <div className="salary-form-group">
+            <label className="salary-input-label">
+              Approve future leave days
+            </label>
             <input
               type="number"
               value={approveFutureDays}
               onChange={(e) => setApproveFutureDays(e.target.value)}
               placeholder="0"
-              style={{ width: "100%", height: "36px", borderRadius: "6px", border: "1px solid #e3e9f0", padding: "0 10px" }}
+              className="salary-input"
             />
           </div>
-          <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "4px" }}>Other deductions (₹), optional</label>
+          <div className="salary-form-group">
+            <label className="salary-input-label">
+              Other deductions (₹), optional
+            </label>
             <input
               type="number"
               value={otherDeductions}
               onChange={(e) => setOtherDeductions(e.target.value)}
               placeholder="0"
-              style={{ width: "100%", height: "36px", borderRadius: "6px", border: "1px solid #e3e9f0", padding: "0 10px" }}
+              className="salary-input"
             />
           </div>
         </div>
 
-        <div style={{ marginBottom: "14px" }}>
-          <label style={{ fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "4px" }}>Reason for HR approval</label>
+        <div className="salary-form-group mb-14">
+          <label className="salary-input-label">Reason for HR approval</label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Required when No LOP or future leave is used"
             rows="2"
-            style={{ width: "100%", borderRadius: "6px", border: "1px solid #e3e9f0", padding: "8px 10px" }}
+            className="salary-textarea"
           />
         </div>
 
         {/* Salary Summary */}
-        <div style={{ fontSize: "11px", fontWeight: "700", color: "#5b6f86", marginBottom: "6px" }}>SALARY SUMMARY</div>
-        <div style={{ background: "#f8fafc", border: "1px solid #e3e9f0", borderRadius: "8px", padding: "10px 12px", fontSize: "12.5px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-            <span>Per-day salary (Monthly CTC ÷ {workingDays} days)</span>
+        <div className="section-title">SALARY SUMMARY</div>
+        <div className="summary-box">
+          <div className="summary-row">
+            <span>Per-day salary</span>
             <strong>{formatCurrency(perDaySalary)}</strong>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-            <span>LOP days after HR adjustment</span>
-            <strong>{lopDays}</strong>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+          <div className="summary-row">
             <span>LOP deduction</span>
             <strong>{formatCurrency(lopDeduction)}</strong>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+          <div className="summary-row">
             <span>Other deductions</span>
             <strong>{formatCurrency(otherDeductions || 0)}</strong>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-            <span>Leave balance carried to next month</span>
-            <strong>{balanceLeft}</strong>
-          </div>
-          <hr style={{ border: "none", borderTop: "1px solid #e3e9f0", margin: "8px 0" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: "700", color: "#0b5ca8" }}>
+          <hr className="summary-divider" />
+          <div className="summary-total-row">
             <span>Net salary</span>
             <span>{formatCurrency(netSalary)}</span>
           </div>

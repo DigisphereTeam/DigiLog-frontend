@@ -94,6 +94,7 @@ export default function Login() {
 
     const payload = {
       email: employeeEmail.trim(),
+      password,
     };
 
     setEmployeeLoading(true);
@@ -117,7 +118,7 @@ export default function Login() {
         }
 
         // Redirect Employee to /attendance-history
-        navigate("/attendance-history", { replace: true });
+        navigate("/calendar", { replace: true });
       } else {
         toast.error(response.message || "Login failed");
       }
@@ -301,6 +302,32 @@ export default function Login() {
                         onChange={(e) => setEmployeeEmail(e.target.value)}
                         autoComplete="username"
                       />
+                    </div>
+
+                    <label className="form-label" htmlFor="password">
+                      Password
+                    </label>
+                    <div className="input-icon-wrap">
+                      <i className="bi bi-lock"></i>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        className="form-control"
+                        id="password"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        autoComplete="current-password"
+                      />
+                      <button
+                        type="button"
+                        className="toggle-eye"
+                        onClick={() => setShowPassword((s) => !s)}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
                     </div>
 
                     <button

@@ -34,17 +34,19 @@ import Button from "../../../components/Button/Button";
 
 const PAGE_SIZE = 10;
 
-// Updated initial form state to include all personal, salary, and bank fields
+// Updated initial form state to include password, relievingDate, and effectiveDate
 const INITIAL_FORM_STATE = {
   employeeId: "",
   empCode: "",
   name: "",
   email: "",
+  password: "",
   department: "",
   designation: "",
   phone: "",
   dob: "",
   joiningDate: "",
+  relievingDate: "",
   status: "Active",
   basicSalary: "",
   hra: "",
@@ -53,6 +55,7 @@ const INITIAL_FORM_STATE = {
   pfDeduction: "",
   professionalTax: "",
   otherDeductions: "",
+  effectiveDate: "",
   accountHolderName: "",
   bankName: "",
   accountNumber: "",
@@ -70,11 +73,7 @@ const INITIAL_FILTERS = {
 const EmployeeManagement = () => {
   const navigate = useNavigate();
 
-  const {
-    data = { employees: [], counts: {} },
-    isLoading,
-    isError,
-  } = useEmployees();
+  const { data = { employees: [], counts: {} }, isLoading, isError} = useEmployees();
   const { employees = [], counts = {} } = data;
   const { data: departments = [] } = useDepartments();
   
@@ -156,7 +155,6 @@ const EmployeeManagement = () => {
     setIsFetchingDetails(true);
     
     try {
-      // Fetch full employee details (salary, bank info, etc.) on demand
       const response = await getEmployeeAttendance(employee.id);
       const resData = response?.data || response || {};
       const fullEmp = resData?.employee || {};
@@ -168,11 +166,13 @@ const EmployeeManagement = () => {
         empCode: String(fullEmp.emp_code || employee.empCode || ""),
         name: String(fullEmp.employee_name || employee.name || ""),
         email: String(fullEmp.email || employee.email || ""),
+        password: "", // Keep password empty on edit for security reasons
         department: String(fullEmp.department_id || employee.departmentId || ""),
         designation: String(fullEmp.designation || employee.designation || ""),
         phone: String(fullEmp.mobile_number || employee.phone || ""),
         dob: fullEmp.date_of_birth || "",
         joiningDate: fullEmp.joining_date || "",
+        relievingDate: fullEmp.relieving_date || "",
         status: String(fullEmp.status || employee.status || "Active"),
         
         // Salary fields
@@ -208,7 +208,6 @@ const EmployeeManagement = () => {
   };
 
   const handleSaveEmployee = (formData) => {
-    // Optional: Zod Schema validation check if used
     if (employeeSchema) {
       const result = employeeSchema.safeParse(formData);
       if (!result.success) {
@@ -218,7 +217,6 @@ const EmployeeManagement = () => {
       }
     }
 
-    // Transform form fields into the exact JSON API payload needed by backend
     const payload = {
       employee_name: formData.name,
       date_of_birth: formData.dob,
@@ -227,8 +225,10 @@ const EmployeeManagement = () => {
       mobile_number: formData.phone,
       status: formData.status || "Active",
       email: formData.email,
+      ...(formData.password && { password: formData.password }), // Include password only if provided
       emp_code: formData.empCode,
       joining_date: formData.joiningDate,
+      relieving_date: formData.relievingDate || null,
       basic_salary: Number(formData.basicSalary || 0),
       hra: Number(formData.hra || 0),
       travel_allowance: Number(formData.travelAllowance || 0),

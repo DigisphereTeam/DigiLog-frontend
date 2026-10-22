@@ -6,6 +6,18 @@ const StatCard = ({
   icon: Icon,
   className = "",
 }) => {
+  const renderIcon = () => {
+    if (!Icon) return null;
+
+    // If icon is a string, render it as an image URL
+    if (typeof Icon === "string") {
+      return <img src={Icon} alt="" />;
+    }
+
+    // Otherwise, render it as a React component
+    return <Icon />;
+  };
+
   return (
     <div className={`stat-card ${className}`}>
       <div className="stat-card-header">
@@ -13,7 +25,7 @@ const StatCard = ({
 
         {Icon && (
           <span className="stat-card-icon">
-            <Icon />
+            {renderIcon()}
           </span>
         )}
       </div>

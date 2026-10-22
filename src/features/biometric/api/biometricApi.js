@@ -40,7 +40,6 @@ export const useConfirmEnrollment = () => {
 };
 
 export const getDashboardAttendanceHistory = async (params) => {
-  // Only pass query parameters supported by your backend endpoint
   const queryParams = {
     search: params.search || undefined,
     status: params.status || undefined,

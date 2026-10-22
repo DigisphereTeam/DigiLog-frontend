@@ -35,8 +35,8 @@ const App = () => {
 
            {/* SHARED MODULES (Both Admin & Employee)  */}        
           <Route element={<RoleGuard allowedRoles={["admin", "employee"]} />}>
-            <Route path="/attendance-history" element={<AttendanceHistory />} />
             <Route path="/calendar" element={<Calendar />} />
+            <Route path="/attendance-history" element={<AttendanceHistory />} />
             <Route path="/shifts" element={<Shifts />} />
           </Route>
 

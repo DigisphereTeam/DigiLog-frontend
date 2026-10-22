@@ -7,134 +7,15 @@ import TablePagination from "../../../components/TablePagination/TablePagination
 import { useMemo, useState } from "react";
 import { formatCurrency } from "../../../utils/formatCurrency";
 import { FiCheck, FiEdit2, FiEye } from "react-icons/fi";
+import netSalaryIcon from "../../../assets/icons/salary/net-salary-icon.svg"
+import lopIcon from "../../../assets/icons/salary/lop-icon.svg"
 import AddSalaryModal from "../components/AddSalaryModal";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useAllEmployees, useCreditSalary,  } from "../api/salaryApi";
 import "./Salary.css";
 
-const StaticSalaryData = {
-  TotalEmployees: 13,
-  NetPayroll: 315000,
-  LOPDeductions: 7680,
-  PendingPayments: 5,
-};
-const mockSalaryData = [
-  {
-    id: 1,
-    employeeName: "Sravani Kotha",
-    employeeCode: "240701",
-    monthlyCTC: 50000,
-    workingDays: 27,
-    presentDays: 26,
-    leavesTaken: 1,
-    balanceLeft: 3.5,
-    lopDays: 0,
-    deductions: 0,
-    totalSalary: 50000,
-    status: "paid",
-  },
-  {
-    id: 2,
-    employeeName: "Ravi Teja Pasam",
-    employeeCode: "240702",
-    monthlyCTC: 40000,
-    workingDays: 27,
-    presentDays: 26,
-    leavesTaken: 1,
-    balanceLeft: 0,
-    lopDays: 0,
-    deductions: 0,
-    totalSalary: 40000,
-    status: "paid",
-  },
-  {
-    id: 3,
-    employeeName: "Lakshmi Prasanna",
-    employeeCode: "240703",
-    monthlyCTC: 33000,
-    workingDays: 27,
-    presentDays: 27,
-    leavesTaken: 0,
-    balanceLeft: 3,
-    lopDays: 0,
-    deductions: 0,
-    totalSalary: 33000,
-    status: "pending",
-  },
-  {
-    id: 4,
-    employeeName: "Ashokteja Ande",
-    employeeCode: "240705",
-    monthlyCTC: 45000,
-    workingDays: 27,
-    presentDays: 25,
-    leavesTaken: 2,
-    balanceLeft: 0,
-    lopDays: 2,
-    deductions: 2903,
-    totalSalary: 42097,
-    status: "pending",
-  },
-  {
-    id: 5,
-    employeeName: "Prasad Meragala",
-    employeeCode: "240708",
-    monthlyCTC: 40000,
-    workingDays: 27,
-    presentDays: 26,
-    leavesTaken: 1,
-    balanceLeft: 1,
-    lopDays: 0,
-    deductions: 0,
-    totalSalary: 40000,
-    status: "pending",
-  },
-  {
-    id: 3,
-    employeeName: "Lakshmi Prasanna",
-    employeeCode: "240703",
-    monthlyCTC: 33000,
-    workingDays: 27,
-    presentDays: 27,
-    leavesTaken: 0,
-    balanceLeft: 3,
-    lopDays: 0,
-    deductions: 0,
-    totalSalary: 33000,
-    status: "pending",
-  },
-  {
-    id: 4,
-    employeeName: "Ashokteja Ande",
-    employeeCode: "240705",
-    monthlyCTC: 45000,
-    workingDays: 27,
-    presentDays: 25,
-    leavesTaken: 2,
-    balanceLeft: 0,
-    lopDays: 2,
-    deductions: 2903,
-    totalSalary: 42097,
-    status: "pending",
-  },
-  {
-    id: 5,
-    employeeName: "Prasad Meragala",
-    employeeCode: "240708",
-    monthlyCTC: 40000,
-    workingDays: 27,
-    presentDays: 26,
-    leavesTaken: 1,
-    balanceLeft: 1,
-    lopDays: 0,
-    deductions: 0,
-    totalSalary: 40000,
-    status: "pending",
-  },
-];
-
 const SalaryManagement = () => {
-  const [data, setData] = useState(mockSalaryData);
   const [filters, setFilters] = useState({
     search: "",
     month: "",
@@ -146,6 +27,35 @@ const SalaryManagement = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const navigate = useNavigate();
 
+  // Fetch data using the custom hook with filters
+  const { data: apiResponse, isLoading, isError } = useAllEmployees(filters);
+
+  // Extract processed data and statistics safely from the hook result
+  const rawData = apiResponse?.data || [];
+  const statistics = apiResponse?.statistics || {
+    total_employees: 0,
+    net_payroll: 0,
+    lop_deductions: 0,
+    pending_payments: 0,
+  };
+
+  const creditSalaryMutation = useCreditSalary();
+
+  const handleSaveSalary = (employeeId, salaryPayload) => {
+    creditSalaryMutation.mutate(
+      { employeeId, payload: salaryPayload },
+      {
+        onSuccess: (res) => {
+          toast.success(res?.message || "Salary credited successfully!");
+          setIsModalOpen(false); // Close modal on success
+        },
+        onError: (err) => {
+          toast.error(err?.response?.data?.message || "Failed to credit salary.");
+        },
+      }
+    );
+  };
+
   const handleOpenAddModal = () => {
     setSelectedRecord(null);
     setIsModalOpen(true);
@@ -156,46 +66,6 @@ const SalaryManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveSalary = (salaryPayload) => {
-    setData((prevData) => {
-      const existingIndex = prevData.findIndex(
-        (item) => item.employeeCode === salaryPayload.employeeCode,
-      );
-
-      if (existingIndex > -1) {
-        // Update existing record
-        const updated = [...prevData];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          deductions:
-            salaryPayload.otherDeductions || updated[existingIndex].deductions,
-          totalSalary:
-            salaryPayload.netSalary || updated[existingIndex].totalSalary,
-          status: "paid", // Mark as paid when processed
-        };
-        return updated;
-      } else {
-        // Add new record
-        const newEntry = {
-          id: Date.now(),
-          employeeName: salaryPayload.employeeName || "Harsha Vardhan",
-          employeeCode: salaryPayload.employeeCode,
-          monthlyCTC: 25000,
-          workingDays: 27,
-          presentDays: 26.5,
-          leavesTaken: 0.5,
-          balanceLeft: 1,
-          lopDays: salaryPayload.noLop ? 0 : 0,
-          deductions: salaryPayload.otherDeductions || 0,
-          totalSalary: salaryPayload.netSalary || 25000,
-          status: "paid",
-        };
-        return [newEntry, ...prevData];
-      }
-    });
-
-    setIsModalOpen(false);
-  };
 
   const handleFilterChange = (name, value) => {
     setFilters((prev) => ({ ...prev, [name]: value }));
@@ -211,19 +81,22 @@ const SalaryManagement = () => {
     setPage(1);
   };
 
+  // Client-side filtering fallback for search/status if needed
   const filteredData = useMemo(() => {
-    return data.filter((row) => {
+    return rawData.filter((row) => {
+      const name = row.employee_name || "";
+      const code = row.emp_code || "";
       const matchesSearch =
-        row.employeeName.toLowerCase().includes(filters.search.toLowerCase()) ||
-        row.employeeCode.toLowerCase().includes(filters.search.toLowerCase());
+        name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        code.toLowerCase().includes(filters.search.toLowerCase());
 
       const matchesStatus = filters.status
-        ? row.status === filters.status
+        ? row.salary_status?.toLowerCase() === filters.status.toLowerCase()
         : true;
 
       return matchesSearch && matchesStatus;
     });
-  }, [data, filters]);
+  }, [rawData, filters]);
 
   const totalRecords = filteredData.length;
   const totalPages = Math.ceil(totalRecords / pageSize) || 1;
@@ -248,20 +121,14 @@ const SalaryManagement = () => {
       type: "select",
       Placeholder: "All Status",
       options: [
-        {
-          label: "Paid",
-          value: "paid",
-        },
-        {
-          label: "Pending",
-          value: "pending",
-        },
+        { label: "Paid", value: "paid" },
+        { label: "Pending", value: "pending" },
       ],
     },
   ];
 
   const handleViewSalary = (employee) => {
-    navigate(`/employee-salary/${employee.id}`, { state: { employee } });
+    navigate(`/employee-salary/${employee.employee_id}`, { state: { employee } });
   };
 
   const handleEditSalary = (employee) => {
@@ -269,8 +136,8 @@ const SalaryManagement = () => {
   };
 
   const handleCreditSalary = (employee) => {
-    if (employee.status === "active") {
-      toast.error(`$(employee.employeeName)'s salary is already credited!`);
+    if (employee.salary_status?.toLowerCase() === "paid") {
+      toast.error(`${employee.employee_name}'s salary is already credited!`);
       return;
     }
     handleOpenEditModal(employee);
@@ -278,110 +145,100 @@ const SalaryManagement = () => {
 
   const salaryColumns = [
     {
-      key: "employeeName",
+      key: "employee_name",
       header: "EMPLOYEE",
       width: "200px",
       render: (row) => (
         <div className="salary-employee-cell">
-          <div className="salary-employee-name">{row.employeeName}</div>
-
-          <div className="salary-employee-code">Code: {row.employeeCode}</div>
+          <div className="salary-employee-name">{row.employee_name}</div>
+          <div className="salary-employee-code">Code: {row.emp_code || "N/A"}</div>
         </div>
       ),
     },
-
     {
-      key: "monthlyCTC",
+      key: "monthly_ctc",
       header: "MONTHLY CTC",
       width: "140px",
-      render: (row) => formatCurrency(row.monthlyCTC),
+      render: (row) => formatCurrency(row.monthly_ctc),
     },
-
     {
-      key: "workingDays",
+      key: "working_days",
       header: "WORKING DAYS",
       width: "130px",
     },
-
     {
-      key: "presentDays",
+      key: "present_days",
       header: "PRESENT DAYS",
       width: "130px",
     },
-
     {
-      key: "leavesTaken",
+      key: "leaves_taken",
       header: "LEAVES TAKEN",
       width: "120px",
     },
-
     {
-      key: "balanceLeft",
+      key: "available_leaves",
       header: "BALANCE LEFT",
       width: "120px",
     },
-
     {
-      key: "lopDays",
+      key: "lop_days",
       header: "LOP DAYS",
       width: "100px",
       render: (row) => (
         <span
-          className={
-            row.lopDays > 0
+        className={
+            row.lop_days > 0
               ? "salary-lop-value salary-lop-value--danger"
               : "salary-lop-value"
           }
         >
-          {row.lopDays}
+          {row.lop_days}
         </span>
       ),
     },
-
     {
-      key: "deductions",
+      key: "deduction",
       header: "DEDUCTIONS",
       width: "120px",
       render: (row) => (
         <span
           className={
-            row.deductions > 0
+            row.deduction > 0
               ? "salary-deduction-value"
               : "salary-deduction-value salary-deduction-value--zero"
           }
         >
-          {row.deductions > 0
-            ? `- ${formatCurrency(row.deductions)}`
+          {row.deduction > 0
+            ? `- ${formatCurrency(row.deduction)}`
             : formatCurrency(0)}
         </span>
       ),
     },
-
     {
-      key: "totalSalary",
+      key: "net_amount",
       header: "TOTAL SALARY",
       width: "130px",
       render: (row) => (
         <strong className="salary-total-value">
-          {formatCurrency(row.totalSalary)}
+          {formatCurrency(row.net_amount)}
         </strong>
       ),
     },
-
     {
-      key: "status",
+      key: "salary_status",
       header: "STATUS",
       width: "110px",
-      render: (row) => (
-        <span
-          className={`salary-status-badge salary-status-badge--${row.status}`}
-        >
-          <span className="salary-status-dot">•</span>
-          {row.status === "paid" ? "Paid" : "Pending"}
-        </span>
-      ),
+      render: (row) => {
+        const isPaid = row.salary_status?.toLowerCase() === "paid";
+        return (
+          <span className={`salary-status-badge salary-status-badge--${isPaid ? "paid" : "pending"}`}>
+            <span className="salary-status-dot">•</span>
+            {isPaid ? "Paid" : "Pending"}
+          </span>
+        );
+      },
     },
-
     {
       key: "actions",
       header: "ACTIONS",
@@ -396,7 +253,6 @@ const SalaryManagement = () => {
           >
             <FiEye />
           </button>
-
           <button
             type="button"
             className="salary-action-button"
@@ -405,7 +261,6 @@ const SalaryManagement = () => {
           >
             <FiEdit2 />
           </button>
-
           <button
             type="button"
             className="salary-action-button"
@@ -419,8 +274,6 @@ const SalaryManagement = () => {
     },
   ];
 
-  
-
   return (
     <div className="employee-management">
       <div className="department-content-header">
@@ -430,23 +283,30 @@ const SalaryManagement = () => {
         </div>
         <Button onClick={handleOpenAddModal}>Credit Salary</Button>
       </div>
+
       <div className="leaves-stats-grid">
         <StatCard
           title="Total Employees"
-          value={StaticSalaryData.TotalEmployees}
+          value={isLoading ? "..." : statistics.total_employees}
           icon={FaUsers}
         />
-        <StatCard title="Net Payroll" value={StaticSalaryData.NetPayroll} />
+        <StatCard
+          title="Net Payroll"
+          value={isLoading ? "..." : formatCurrency(statistics.net_payroll)}
+          icon={netSalaryIcon}
+        />
         <StatCard
           title="LOP Deductions"
-          value={StaticSalaryData.LOPDeductions}
+          value={isLoading ? "..." : formatCurrency(statistics.lop_deductions)}
+          icon={lopIcon}
         />
         <StatCard
           title="Pending Payments"
-          value={StaticSalaryData.PendingPayments}
+          value={isLoading ? "..." : statistics.pending_payments}
           icon={FaClock}
         />
       </div>
+
       <div className="employee-content-card">
         <TableToolbar
           filters={toolbarFilters}
@@ -454,7 +314,15 @@ const SalaryManagement = () => {
           onChange={handleFilterChange}
           onClear={handleClearFilters}
         />
-        <DataTable columns={salaryColumns} data={paginatedData} rowKey="id" />
+        
+        {isLoading ? (
+          <div style={{ padding: "40px", textAlign: "center", color: "#6b7280" }}>
+            Loading salary records...
+          </div>
+        ) : (
+          <DataTable columns={salaryColumns} data={paginatedData} rowKey="employee_id" />
+        )}
+
         <TablePagination
           page={page}
           pageSize={pageSize}
@@ -464,12 +332,12 @@ const SalaryManagement = () => {
           onNext={() => setPage((prev) => Math.min(prev + 1, totalPages))}
         />
       </div>
+
       <AddSalaryModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveSalary}
         employeeData={selectedRecord}
-        employeesList={data}
       />
     </div>
   );
