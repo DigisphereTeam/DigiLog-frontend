@@ -56,7 +56,7 @@ const parseYYYYMMToLabel = (yyyymm) => {
 const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
   const [month, setMonth] = useState("Sep 2026");
   const [selectedEmpId, setSelectedEmpId] = useState("");
-  const [noLop, setNoLop] = useState(false);
+  const [isFutureLeaveEnabled, setIsFutureLeaveEnabled] = useState(false);
   const [approveFutureDays, setApproveFutureDays] = useState(0);
   const [otherDeductions, setOtherDeductions] = useState(0);
   const [reason, setReason] = useState("");
@@ -79,10 +79,18 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
   const yearsList = getYearsList();
 
   // API 2: Fetch specific employee details when ID or month changes
-  const { data: empInfo, isLoading: isEmpInfoLoading } = useEmpInfo(
+  const { data: empInfo, isLoading: isEmpInfoLoading, error: empInfoError } = useEmpInfo(
     selectedEmpId,
     rawYYYYMM,
   );
+
+  // Trigger toast instantly when backend returns joining month or other info fetch errors
+  useEffect(() => {
+    if (empInfoError) {
+      const errorMsg = empInfoError?.response?.data?.message || empInfoError?.message;
+      toast.error(errorMsg || "Selected month cannot be before the employee's joining month");
+    }
+  }, [empInfoError]);
 
   const handleCloseDropdowns = useCallback(() => {
     setIsMonthPickerOpen(false);
@@ -127,17 +135,16 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
 
   const resetForm = () => {
     setSelectedEmpId("");
-    setNoLop(false);
+    setIsFutureLeaveEnabled(false);
     setApproveFutureDays(0);
     setOtherDeductions(0);
     setReason("");
     setMonth("Sep 2026");
     setHasOpenedEmpDropdown(false);
   };
-  // Inside useEffect when editing/opening modal:
+
   useEffect(() => {
     if (employeeData) {
-      // Ensure we capture employee_id correctly (fallback to id if needed)
       setSelectedEmpId(employeeData.employee_id || employeeData.id || "");
       setOtherDeductions(employeeData.deductions || 0);
       if (employeeData.month) setMonth(employeeData.month);
@@ -147,7 +154,7 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
   }, [employeeData, isOpen]);
 
   // Map API 2 response fields with fallbacks
-  const monthlyCtc = empInfo?.current_ctc || 0;
+  const monthlyCtc = empInfo?.monthly_ctc || 0;
   const annualCtc = empInfo?.annual_ctc || monthlyCtc * 12;
   const workingDays = empInfo?.working_days || 0;
   const presentDays = empInfo?.present_days || 0;
@@ -155,12 +162,16 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
   const leavesTaken = empInfo?.leaves_taken || 0;
   const balanceLeft = empInfo?.available_leaves || 0;
   const baseLopDays = empInfo?.lop_days_before_hr || 0;
+  const standardDeductions = empInfo?.total_deductions || 0;
 
-  const perDaySalary =
-    workingDays > 0 ? Math.round(monthlyCtc / workingDays) : 0;
-  const lopDays = noLop ? 0 : baseLopDays;
+  // Fixed per-day salary calculation based on monthly CTC / 31
+  const perDaySalary = monthlyCtc > 0 ? Math.round(monthlyCtc / 31) : 0;
+  
+  // LOP calculation
+  const approvedFutureDaysCount = isFutureLeaveEnabled ? Math.max(0, Number(approveFutureDays || 0)) : 0;
+  const lopDays = Math.max(0, baseLopDays - approvedFutureDaysCount);
   const lopDeduction = lopDays * perDaySalary;
-  const netSalary = monthlyCtc - lopDeduction - Number(otherDeductions || 0);
+  const netSalary = monthlyCtc - standardDeductions - lopDeduction - Number(otherDeductions || 0);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -182,10 +193,9 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
       deductions: Number(otherDeductions || 0),
       hr_reason:
         reason ||
-        "Approved leave days are within the employee's available leave balance.",
+        "Approved leave days are within policy limits or covered by future leave balance.",
     };
 
-    // Simply hand the data up to the parent component
     onSave(targetEmpId, payload);
   };
 
@@ -267,7 +277,7 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
             </div>
           </div>
 
-          {/* Employee Dropdown with Scroller (API 1 Lazy Loaded) */}
+          {/* Employee Dropdown */}
           <div className="salary-form-group">
             <label className="salary-label">
               Employee <span className="required-star">*</span>
@@ -278,7 +288,7 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
                 className={`modal-month-trigger ${isEmpDropdownOpen ? "active" : ""}`}
                 onClick={() => {
                   if (!employeeData) {
-                    setHasOpenedEmpDropdown(true); // Triggers API 1 fetch on click
+                    setHasOpenedEmpDropdown(true);
                     setIsEmpDropdownOpen((prev) => !prev);
                   }
                 }}
@@ -290,8 +300,8 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
                     {selectedEmployeeObj
                       ? `${selectedEmployeeObj.employee_name} (${selectedEmployeeObj.employee_id})`
                       : isEmpListLoading
-                        ? "Loading employees..."
-                        : "Select Employee"}
+                      ? "Loading employees..."
+                      : "Select Employee"}
                   </span>
                 </span>
                 <FiChevronDown className="modal-select-icon" />
@@ -399,13 +409,16 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
           <label className="checkbox-label">
             <input
               type="checkbox"
-              checked={noLop}
-              onChange={(e) => setNoLop(e.target.checked)}
+              checked={isFutureLeaveEnabled}
+              onChange={(e) => {
+                setIsFutureLeaveEnabled(e.target.checked);
+                if (!e.target.checked) setApproveFutureDays(0);
+              }}
             />
             <span>
-              No LOP for this month
+              Enable approval for future leave days (Advance Leave)
               <small className="checkbox-subtext">
-                No salary is deducted for unpaid leave.
+                Check this box to unlock entering upcoming monthly leave balances to waive applicable LOP days.
               </small>
             </span>
           </label>
@@ -418,10 +431,18 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
             </label>
             <input
               type="number"
+              min="0"
               value={approveFutureDays}
-              onChange={(e) => setApproveFutureDays(e.target.value)}
+              onChange={(e) => setApproveFutureDays(Math.max(0, Number(e.target.value)))}
+              onWheel={(e) => e.target.blur()}
               placeholder="0"
-              className="salary-input"
+              disabled={!isFutureLeaveEnabled}
+              style={{ 
+                opacity: isFutureLeaveEnabled ? 1 : 0.6, 
+                cursor: isFutureLeaveEnabled ? "text" : "not-allowed",
+                appearance: "textfield" 
+              }}
+              className="salary-input no-spin"
             />
           </div>
           <div className="salary-form-group">
@@ -430,10 +451,13 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
             </label>
             <input
               type="number"
+              min="0"
               value={otherDeductions}
-              onChange={(e) => setOtherDeductions(e.target.value)}
+              onChange={(e) => setOtherDeductions(Math.max(0, Number(e.target.value)))}
+              onWheel={(e) => e.target.blur()}
               placeholder="0"
-              className="salary-input"
+              style={{ appearance: "textfield" }}
+              className="salary-input no-spin"
             />
           </div>
         </div>
@@ -443,7 +467,7 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Required when No LOP or future leave is used"
+            placeholder="Required when future leave days are approved"
             rows="2"
             className="salary-textarea"
           />
@@ -453,15 +477,23 @@ const AddSalaryModal = ({ isOpen, onClose, onSave, employeeData = null }) => {
         <div className="section-title">SALARY SUMMARY</div>
         <div className="summary-box">
           <div className="summary-row">
-            <span>Per-day salary</span>
+            <span>Monthly gross salary</span>
+            <strong>{formatCurrency(monthlyCtc)}</strong>
+          </div>
+          <div className="summary-row">
+            <span>Per-day salary (Monthly CTC / 31 days)</span>
             <strong>{formatCurrency(perDaySalary)}</strong>
           </div>
           <div className="summary-row">
-            <span>LOP deduction</span>
+            <span>Standard deductions (PF, PT, etc.)</span>
+            <strong>{formatCurrency(standardDeductions)}</strong>
+          </div>
+          <div className="summary-row">
+            <span>LOP deduction ({lopDays} days)</span>
             <strong>{formatCurrency(lopDeduction)}</strong>
           </div>
           <div className="summary-row">
-            <span>Other deductions</span>
+            <span>Other deductions (HR)</span>
             <strong>{formatCurrency(otherDeductions || 0)}</strong>
           </div>
           <hr className="summary-divider" />

@@ -7,6 +7,7 @@ import DataTable from "../../../components/DataTable/DataTable";
 import TablePagination from "../../../components/TablePagination/TablePagination";
 import { useEmployeeAttendance } from "../api/employeeApi";
 import "./EmployeeDetails.css";
+import LoadingSpinner from "../../../components/LoadingSpinner/LoadingSpinner";
 
 const PAGE_SIZE = 5;
 
@@ -73,8 +74,7 @@ const EmployeeDetails = () => {
   if (isLoading) {
     return (
       <div className="p-5 text-center bg-light min-vh-100">
-        <div className="spinner-border text-primary" role="status" />
-        <p className="mt-2 text-muted">Loading employee details...</p>
+        <LoadingSpinner message="Loading..." fullPage />
       </div>
     );
   }
@@ -88,9 +88,9 @@ const EmployeeDetails = () => {
   }
 
   return (
-    <div className="employee-details-container p-4 bg-light min-vh-100">
+    <div className="employee-details-container p-2 bg-light min-vh-100">
       {/* Top Header Title & Back Button */}
-      <div className="department-employees-header mb-3">
+      <div className="department-employees-header mb-2">
         <h2 className="fw-bold text-dark mb-1">
           {name} ({empCode})
         </h2>
@@ -290,7 +290,7 @@ const EmployeeDetails = () => {
                   </span>
                 </div>
                 <div className="d-flex justify-content-between mb-3 text-secondary">
-                  <span>Deductions</span>
+                  <span>Deductions (PF + Professional Tax + Other)</span>
                   <span className="fw-medium text-danger">- ₹ {Number(salary.total_deductions || 0).toLocaleString()}</span>
                 </div>
                 <hr className="my-3 text-muted" />

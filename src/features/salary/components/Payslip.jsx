@@ -242,7 +242,7 @@ const Payslip = forwardRef(({ data }, ref) => {
           </div>
           <div>
             <div style={{ fontSize: "10px", color: "#6B7280" }}>
-              LOSS OF DAYS
+              LOSS OF PAY DAYS
             </div>
             <div style={{ fontWeight: "600", marginTop: "2px" }}>
               {lossOfDays}

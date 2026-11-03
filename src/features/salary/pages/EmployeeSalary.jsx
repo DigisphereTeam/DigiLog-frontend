@@ -29,10 +29,10 @@ import Payslip from "../components/Payslip";
 
 const PAGE_SIZE = 5;
 
-const EmployeeSalary = () => {
-  // Get logged-in user details
+const EmployeeSalary = ({ currentEmployeeId, isHRView = false }) => {
+  // Get logged-in user details if currentEmployeeId is not passed
   const { user } = useAuth();
-  const activeEmployeeId = user?.employee_id || user?.id || user?.employeeId;
+  const activeEmployeeId = currentEmployeeId || user?.employee_id || user?.id || user?.employeeId;
 
   // 1. Fetch all monthly salary payments for the table view
   const {
@@ -109,14 +109,14 @@ const EmployeeSalary = () => {
 
       try {
         const canvas = await html2canvas(payslipRef.current, {
-          scale: 2,
+          scale: 1.5,
           useCORS: true,
           backgroundColor: "#ffffff",
         });
 
         if (cancelled) return;
 
-        const image = canvas.toDataURL("image/png");
+        const image = canvas.toDataURL("image/jpeg", 0.85);
         const pdf = new jsPDF("p", "mm", "a4");
 
         const pageWidth = pdf.internal.pageSize.getWidth();
@@ -126,18 +126,19 @@ const EmployeeSalary = () => {
 
         pdf.addImage(
           image,
-          "PNG",
+          "JPEG",
           0,
           0,
           pageWidth * scale,
           imageHeight * scale,
+          undefined,
+          "FAST"
         );
 
         const month = activePayslipDetail.salary_month || "payslip";
         const paymentId = activePayslipDetail.payment_id || "salary";
         const fileName = `Payslip_${month}_${paymentId}.pdf`;
 
-        // Use Blob URL to avoid Chrome "Insecure download blocked"
         const blob = pdf.output("blob");
         const blobUrl = URL.createObjectURL(blob);
 
@@ -332,7 +333,7 @@ const EmployeeSalary = () => {
     [isDownloading]
   );
 
-  // Helper mapper to structure single payment API response into Payslip component props
+  // structure API data
   const getPayslipProps = (detail) => {
     if (!detail) return {};
     const sDetails = detail.salary_details || {};
@@ -355,7 +356,7 @@ const EmployeeSalary = () => {
       actualPayableDays: Number(detail.working_days ?? 0),
       totalWorkingDays: Number(detail.working_days ?? 0),
       lossOfDays: Number(detail.lop_days ?? 0),
-      daysPayable: Number(detail.days_present ?? 0),
+      daysPayable: Number(detail.working_days ?? 0) - Number(detail.lop_days ?? 0),
       earnings: [
         { label: "Basic", value: formatCurrency(sDetails.basic_salary) },
         { label: "HRA", value: formatCurrency(sDetails.hra) },
@@ -368,27 +369,27 @@ const EmployeeSalary = () => {
         { label: "Other Deductions", value: formatCurrency(sDetails.other_deductions) },
       ],
       totalEarnings: formatCurrency(detail.gross_amount),
-      totalDeductions: formatCurrency(detail.deductions),
-      netSalaryPayable: formatCurrency(detail.net_amount),
+      totalDeductions: formatCurrency(sDetails.total_deductions),
+      netSalaryPayable: formatCurrency(sDetails.net_salary),
       netSalaryInWords: "Refer to Net Salary Payable",
     };
   };
 
   if (!activeEmployeeId) {
     return (
-      <div className="employee-management">
-        Unable to identify the logged-in employee. Please log in again.
+      <div className="department-management">
+        Unable to identify the employee. Please check employee ID.
       </div>
     );
   }
 
   if (isLoading) {
-    return <div className="employee-management">Loading salary details...</div>;
+    return <div className="department-management">Loading salary details...</div>;
   }
 
   if (isError) {
     return (
-      <div className="employee-management">
+      <div className="department-management">
         Failed to load salary details.
         {error?.message && <p>{error.message}</p>}
       </div>
@@ -396,35 +397,37 @@ const EmployeeSalary = () => {
   }
 
   return (
-    <div className="employee-management">
-      <div className="department-content-header">
-        <div>
-          <h1>My Salary</h1>
-          <p>My payroll details and salary records</p>
+    <div className="department-management">
+      {!isHRView && (
+        <div className="department-content-header">
+          <div>
+            <h1>My Salary</h1>
+            <p>My payroll details and salary records</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="leaves-stats-grid">
         <StatCard
-          title="Net Salary"
+          title="NET SALARY"
           value={formatCurrency(statistics?.net_salary)}
           icon={netSalaryIcon}
         />
 
         <StatCard
-          title="Paid Leaves"
+          title="PAID LEAVES"
           value={statistics?.paid_leaves ?? 0}
           icon={paidLeaves}
         />
 
         <StatCard
-          title="LOP Days"
+          title="LOP DAYS"
           value={statistics?.lop_days ?? 0}
           icon={lopIcon}
         />
 
         <StatCard
-          title="Deductions"
+          title="DEDUCTIONS"
           value={formatCurrency(statistics?.deductions)}
           icon={deductionsIcon}
         />
@@ -451,12 +454,12 @@ const EmployeeSalary = () => {
         )}
 
         <TablePagination
-          currentPage={currentPage}
-          totalCount={filteredData.length}
+          page={currentPage}
+          totalPages={totalPages}
+          totalRecords={filteredData.length}
           pageSize={PAGE_SIZE}
-          onPageChange={(nextPage) =>
-            setCurrentPage(Math.min(Math.max(nextPage, 1), totalPages))
-          }
+          onPrevious={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
         />
 
         {/* COMMON MODAL FOR VIEWING PAYSLIP */}

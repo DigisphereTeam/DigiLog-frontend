@@ -182,7 +182,7 @@ const EmployeeManagement = () => {
         otherAllowances: salary.other_allowances ?? "",
         pfDeduction: salary.pf_deduction ?? "",
         professionalTax: salary.professional_tax ?? "",
-        otherDeductions: salary.total_deductions ?? salary.other_deductions ?? "",
+        otherDeductions: salary.other_deductions ?? "",
         effectiveDate: salary.effective_date || fullEmp.joining_date || "",
         
         // Bank fields

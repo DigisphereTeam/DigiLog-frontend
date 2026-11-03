@@ -26,7 +26,7 @@
 
 .sidebar-header {
   min-height: 76px;
-  padding: 18px 20px;
+  padding: 14px 17px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -258,7 +258,7 @@
 }
 
 .app-content {
-  padding: 20px;
+  padding: 12px;
 }
 
 /* MOBILE RESPONSIVE RULES */

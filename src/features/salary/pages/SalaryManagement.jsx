@@ -6,13 +6,13 @@ import DataTable from "../../../components/DataTable/DataTable";
 import TablePagination from "../../../components/TablePagination/TablePagination";
 import { useMemo, useState } from "react";
 import { formatCurrency } from "../../../utils/formatCurrency";
-import { FiCheck, FiEdit2, FiEye } from "react-icons/fi";
-import netSalaryIcon from "../../../assets/icons/salary/net-salary-icon.svg"
-import lopIcon from "../../../assets/icons/salary/lop-icon.svg"
+import { FiEye, FiArrowLeft } from "react-icons/fi";
+import netSalaryIcon from "../../../assets/icons/salary/net-salary-icon.svg";
+import lopIcon from "../../../assets/icons/salary/lop-icon.svg";
 import AddSalaryModal from "../components/AddSalaryModal";
-import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { useAllEmployees, useCreditSalary,  } from "../api/salaryApi";
+import { useAllEmployees, useCreditSalary } from "../api/salaryApi";
+import EmployeeSalary from "./EmployeeSalary";
 import "./Salary.css";
 
 const SalaryManagement = () => {
@@ -22,10 +22,13 @@ const SalaryManagement = () => {
     status: "",
   });
   const [page, setPage] = useState(1);
-  const pageSize = 5;
+  const pageSize = 10;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const navigate = useNavigate();
+
+  // Selected employee for HR View
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
+  const [selectedEmployeeName, setSelectedEmployeeName] = useState("");
 
   // Fetch data using the custom hook with filters
   const { data: apiResponse, isLoading, isError } = useAllEmployees(filters);
@@ -60,12 +63,6 @@ const SalaryManagement = () => {
     setSelectedRecord(null);
     setIsModalOpen(true);
   };
-
-  const handleOpenEditModal = (employee) => {
-    setSelectedRecord(employee);
-    setIsModalOpen(true);
-  };
-
 
   const handleFilterChange = (name, value) => {
     setFilters((prev) => ({ ...prev, [name]: value }));
@@ -128,19 +125,19 @@ const SalaryManagement = () => {
   ];
 
   const handleViewSalary = (employee) => {
-    navigate(`/employee-salary/${employee.employee_id}`, { state: { employee } });
+    const employeeId =
+      employee.employee_id ||
+      employee.employeeId ||
+      employee.id ||
+      employee._id;
+
+    setSelectedEmployeeId(employeeId);
+    setSelectedEmployeeName(employee.employee_name || "Employee");
   };
 
-  const handleEditSalary = (employee) => {
-    handleOpenEditModal(employee);
-  };
-
-  const handleCreditSalary = (employee) => {
-    if (employee.salary_status?.toLowerCase() === "paid") {
-      toast.error(`${employee.employee_name}'s salary is already credited!`);
-      return;
-    }
-    handleOpenEditModal(employee);
+  const handleBackToSalaryManagement = () => {
+    setSelectedEmployeeId(null);
+    setSelectedEmployeeName("");
   };
 
   const salaryColumns = [
@@ -187,7 +184,7 @@ const SalaryManagement = () => {
       width: "100px",
       render: (row) => (
         <span
-        className={
+          className={
             row.lop_days > 0
               ? "salary-lop-value salary-lop-value--danger"
               : "salary-lop-value"
@@ -242,7 +239,7 @@ const SalaryManagement = () => {
     {
       key: "actions",
       header: "ACTIONS",
-      width: "130px",
+      width: "100px",
       render: (row) => (
         <div className="salary-table-actions">
           <button
@@ -253,26 +250,34 @@ const SalaryManagement = () => {
           >
             <FiEye />
           </button>
-          <button
-            type="button"
-            className="salary-action-button"
-            title="Edit salary"
-            onClick={() => handleEditSalary(row)}
-          >
-            <FiEdit2 />
-          </button>
-          <button
-            type="button"
-            className="salary-action-button"
-            title="Credit salary"
-            onClick={() => handleCreditSalary(row)}
-          >
-            <FiCheck />
-          </button>
         </div>
       ),
     },
   ];
+
+  if (selectedEmployeeId) {
+    return (
+      <div className="employee-details-container p-2 bg-light min-vh-100">
+        <div className="department-employees-header mb-0">
+          <h1>{selectedEmployeeName}'s Salary History</h1>
+
+          <button
+            type="button"
+            className="department-back-button"
+            onClick={handleBackToSalaryManagement}
+          >
+            <FiArrowLeft />
+            Back to Salary Management
+          </button>
+        </div>
+
+        <EmployeeSalary
+          currentEmployeeId={selectedEmployeeId}
+          isHRView={true}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="employee-management">
